@@ -56,6 +56,20 @@
   .btn.danger:hover{background:#301612;}
   .btn.small{padding:4px 9px;font-size:12px;}
   .btn.ghost{background:transparent;}
+  .menu-wrap{position:relative;}
+  .dropdown-menu{
+    display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:30;
+    background:var(--panel);border:1px solid var(--border);border-radius:8px;
+    min-width:160px;padding:6px;box-shadow:0 8px 20px rgba(0,0,0,.4);
+  }
+  .dropdown-menu.open{display:block;}
+  .dropdown-item{
+    display:block;width:100%;text-align:left;background:transparent;border:none;
+    color:var(--text);padding:9px 10px;border-radius:5px;font-size:13px;font-weight:600;
+  }
+  .dropdown-item:hover{background:var(--panel-2);}
+  .dropdown-item.danger{color:#e6a396;}
+  .dropdown-item.danger:hover{background:#301612;}
 
   /* ---------- layout ---------- */
   main{padding:14px 16px 110px;max-width:1180px;margin:0 auto;}
@@ -79,6 +93,10 @@
     color:var(--dim);padding:6px 8px;border-bottom:1px solid var(--border);font-weight:600;
   }
   table.enc tbody tr.main-row{border-bottom:1px solid #232734;}
+  table.enc tbody tr.main-row.active-turn{background:#20261f;box-shadow:inset 3px 0 0 var(--gold);}
+  table.enc tbody tr.main-row.needs-roll{box-shadow:inset 3px 0 0 var(--ember);}
+  table.enc tbody tr.main-row.active-turn.needs-roll{box-shadow:inset 3px 0 0 var(--gold), inset 6px 0 0 var(--ember);}
+  .needs-roll-tag{color:var(--ember);font-size:10px;font-weight:700;margin-left:5px;white-space:nowrap;}
   table.enc tbody tr.main-row.drag-over{box-shadow:inset 0 2px 0 var(--gold);}
   table.enc td{padding:6px 8px;vertical-align:middle;}
   .drag-handle{cursor:grab;color:var(--dim);font-size:14px;user-select:none;padding:0 2px;}
@@ -199,7 +217,7 @@
     position:fixed;left:0;right:0;bottom:0;z-index:20;
     background:linear-gradient(0deg,#181a22,#14161cee);
     border-top:1px solid var(--border);
-    padding:10px 16px;display:flex;align-items:center;justify-content:center;gap:14px;
+    padding:10px 16px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;row-gap:6px;
   }
   .bottombar .lbl{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.08em;}
   .bottombar .num{font-family:var(--mono);font-size:26px;color:var(--gold);min-width:34px;text-align:center;}
@@ -243,8 +261,13 @@
   <h1>Codex Initiative<small>Arcane Codex &middot; Encounter Helper</small></h1>
   <button class="btn" id="sortBtn">⇅ Initiative sortieren</button>
   <div class="spacer"></div>
-  <button class="btn" id="openDb">Datenbank</button>
-  <button class="btn danger" id="clearEnc">Kampf leeren</button>
+  <div class="menu-wrap">
+    <button class="iconbtn" id="burgerBtn" title="Menü" style="width:32px;height:32px;font-size:17px;">☰</button>
+    <div class="dropdown-menu" id="burgerMenu">
+      <button class="dropdown-item" id="openDb">Datenbank</button>
+      <button class="dropdown-item danger" id="clearEnc">Kampf leeren</button>
+    </div>
+  </div>
 </div>
 
 <main>
@@ -291,6 +314,8 @@
   <button class="iconbtn" id="roundMinus">–</button>
   <span class="num" id="roundNum">1</span>
   <button class="btn primary" id="newRound">+ Neue Runde</button>
+  <button class="btn primary" id="nextTurnBtn">▶ Nächster Kämpfer</button>
+  <span id="currentTurnLabel" style="color:var(--dim);font-size:12px;"></span>
 </div>
 
 <!-- DB Modal -->
@@ -437,6 +462,7 @@
   let encounter = load(LS_ENC, { round: 1, combatants: [] });
   encounter.combatants = (encounter.combatants || []).map(migrateCombatant);
   if(!encounter.round) encounter.round = 1;
+  if(encounter.currentTurnId === undefined) encounter.currentTurnId = null;
   let settings = load(LS_SET, { maluses: [] });
   if(!settings.maluses) settings.maluses = [];
 
@@ -564,6 +590,9 @@
 
   function renderEncounter(){
     document.getElementById("roundNum").textContent = encounter.round;
+    const turnLabel = document.getElementById("currentTurnLabel");
+    const currentC = encounter.combatants.find(x => x.id === encounter.currentTurnId);
+    turnLabel.textContent = currentC ? `Am Zug: ${currentC.name}` : "";
     encBody.innerHTML = "";
     if(encounter.combatants.length === 0){
       encTable.style.display = "none";
@@ -577,7 +606,8 @@
       const wi = woundInfo(c.lpCurrent, c.lpMax, c.ko);
 
       const tr = document.createElement("tr");
-      tr.className = "main-row";
+      const needsRoll = c.type === "gegner" && !c.initValue;
+      tr.className = "main-row" + (c.id === encounter.currentTurnId ? " active-turn" : "") + (needsRoll ? " needs-roll" : "");
       tr.draggable = true;
       tr.dataset.id = c.id;
       tr.innerHTML = `
@@ -586,7 +616,10 @@
           <input class="name-input" data-field="name" value="${escAttr(c.name)}">
           ${(!c.expanded) ? buildPreviewWrap(c) : ""}
         </td>
-        <td><span class="type-pill ${c.type}" data-action="toggleType">${c.type === "spieler" ? "Spieler" : "Gegner"}</span></td>
+        <td>
+          <span class="type-pill ${c.type}" data-action="toggleType">${c.type === "spieler" ? "Spieler" : "Gegner"}</span>
+          ${needsRoll ? `<span class="needs-roll-tag" title="Initiative noch würfeln">🎲 würfeln!</span>` : ""}
+        </td>
         <td>
           <div class="init-cell">
             <button class="iconbtn" data-action="rollInit" title="Initiative würfeln (2W10 + Bonus)">🎲</button>
@@ -797,6 +830,32 @@
     renderEncounter();
     toast("Initiative sortiert");
   };
+  document.getElementById("nextTurnBtn").onclick = () => {
+    if(encounter.combatants.length === 0){ toast("Keine Kämpfer im Encounter"); return; }
+    const idx = encounter.combatants.findIndex(c => c.id === encounter.currentTurnId);
+    const nextIdx = idx + 1;
+    if(nextIdx >= encounter.combatants.length){
+      encounter.currentTurnId = null;
+      toast("Alle Kämpfer durch – neue Initiative für die nächste Runde würfeln!");
+    } else {
+      encounter.currentTurnId = encounter.combatants[nextIdx].id;
+    }
+    saveEnc();
+    renderEncounter();
+  };
+  const burgerBtn = document.getElementById("burgerBtn");
+  const burgerMenu = document.getElementById("burgerMenu");
+  burgerBtn.onclick = (e) => {
+    e.stopPropagation();
+    burgerMenu.classList.toggle("open");
+  };
+  burgerMenu.addEventListener("click", (e) => {
+    if(e.target.closest(".dropdown-item")) burgerMenu.classList.remove("open");
+  });
+  document.addEventListener("click", (e) => {
+    if(!e.target.closest(".menu-wrap")) burgerMenu.classList.remove("open");
+  });
+
   document.getElementById("clearEnc").onclick = () => {
     if(encounter.combatants.length === 0) return;
     showConfirm("Aktuellen Kampf wirklich leeren?", {
@@ -804,6 +863,7 @@
       onOk: () => {
         encounter.combatants = [];
         encounter.round = 1;
+        encounter.currentTurnId = null;
         saveEnc();
         renderEncounter();
       }
