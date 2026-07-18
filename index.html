@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Codex Initiative</title>
+<style>
+  :root{
+    --bg:#14161c;
+    --panel:#1c1f28;
+    --panel-2:#20232e;
+    --border:#2d3140;
+    --text:#e8e6df;
+    --dim:#8d93a6;
+    --gold:#c9a227;
+    --gold-dim:#8a7220;
+    --teal:#4fb286;
+    --ember:#d9723a;
+    --radius:6px;
+    --mono: ui-monospace, "SF Mono", Consolas, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px;}
+  h1,h2,h3{font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;font-weight:600;margin:0;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+  textarea{resize:vertical;}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:linear-gradient(180deg,#181a22,#14161c);
+    border-bottom:1px solid var(--border);
+    padding:10px 16px;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .topbar h1{font-size:19px;letter-spacing:.02em;color:var(--gold);white-space:nowrap;}
+  .topbar h1 small{display:block;font-family:inherit;font-size:10px;color:var(--dim);letter-spacing:.15em;text-transform:uppercase;font-weight:400;}
+  .iconbtn{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    border-radius:4px;width:26px;height:26px;line-height:1;font-size:15px;
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  .iconbtn:hover{border-color:var(--gold-dim);}
+  .spacer{flex:1;}
+  .btn{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:600;
+  }
+  .btn:hover{border-color:var(--gold-dim);}
+  .btn.primary{background:var(--gold);border-color:var(--gold);color:#1a1608;}
+  .btn.primary:hover{filter:brightness(1.08);}
+  .btn.danger{color:#e6a396;border-color:#5c2a22;}
+  .btn.danger:hover{background:#301612;}
+  .btn.small{padding:4px 9px;font-size:12px;}
+  .btn.ghost{background:transparent;}
+
+  /* ---------- layout ---------- */
+  main{padding:14px 16px 110px;max-width:1180px;margin:0 auto;}
+
+  .addToggleWrap{margin-bottom:10px;}
+  .addrow{
+    display:none;gap:10px;align-items:center;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:10px 12px;margin-top:8px;
+  }
+  .addrow.open{display:flex;}
+  .addrow select{
+    background:var(--panel-2);color:var(--text);border:1px solid var(--border);
+    border-radius:4px;padding:6px 8px;min-width:200px;
+  }
+  .addrow-sep{width:1px;height:20px;background:var(--border);}
+
+  table.enc{width:100%;border-collapse:collapse;}
+  table.enc thead th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--dim);padding:6px 8px;border-bottom:1px solid var(--border);font-weight:600;
+  }
+  table.enc tbody tr.main-row{border-bottom:1px solid #232734;}
+  table.enc tbody tr.main-row.drag-over{box-shadow:inset 0 2px 0 var(--gold);}
+  table.enc td{padding:6px 8px;vertical-align:middle;}
+  .drag-handle{cursor:grab;color:var(--dim);font-size:14px;user-select:none;padding:0 2px;}
+  .drag-handle:active{cursor:grabbing;}
+  .name-input{
+    background:transparent;border:1px solid transparent;color:var(--text);
+    font-size:14px;font-weight:600;padding:4px 6px;border-radius:4px;width:140px;
+  }
+  .name-input:hover,.name-input:focus{border-color:var(--border);background:var(--panel-2);}
+  .type-pill{
+    display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:2px 7px;border-radius:20px;cursor:pointer;border:1px solid transparent;
+  }
+  .type-pill.spieler{background:#173328;color:var(--teal);border-color:#215a41;}
+  .type-pill.gegner{background:#3a2416;color:var(--ember);border-color:#6b3a1c;}
+
+  .num-input{
+    width:48px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    border-radius:4px;padding:4px;text-align:center;font-family:var(--mono);
+  }
+  .init-cell{display:flex;align-items:center;gap:6px;}
+  .init-cell .num-input{width:44px;font-size:15px;color:var(--gold);font-weight:700;}
+  .bonus-tag{font-size:10px;color:var(--dim);font-family:var(--mono);}
+
+  .lp-cell{display:flex;align-items:center;gap:5px;}
+  .lp-cell .num-input{width:42px;}
+  .lp-sep{color:var(--dim);}
+  .stepbtn{
+    width:20px;height:20px;border-radius:3px;border:1px solid var(--border);background:var(--panel-2);
+    color:var(--text);font-size:12px;display:inline-flex;align-items:center;justify-content:center;line-height:1;
+  }
+  .wound-badge{
+    display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;
+    white-space:nowrap;
+  }
+  .stat-input{width:38px;}
+  .stat-stack-wrap{display:flex;gap:8px;}
+  .stat-stack{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .stat-lbl{color:var(--dim);font-size:10px;margin-right:2px;}
+  .rowbtns{display:flex;gap:4px;}
+  .empty-state{
+    text-align:center;color:var(--dim);padding:40px 10px;border:1px dashed var(--border);
+    border-radius:var(--radius);margin-top:10px;
+  }
+  .expand-btn{
+    background:transparent;border:none;color:var(--dim);font-size:13px;cursor:pointer;
+    padding:2px 4px;
+  }
+  .expand-btn:hover{color:var(--gold);}
+  .detail-preview-wrap{display:none;}
+
+  /* ---------- detail panel (freetext) ---------- */
+  tr.detail-row td{
+    background:var(--panel-2);padding:10px 14px 14px;border-bottom:1px solid #232734;
+  }
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  .detail-field label{
+    display:flex;align-items:center;justify-content:space-between;
+    font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin-bottom:4px;
+  }
+  .detail-field textarea{
+    width:100%;min-height:90px;background:var(--panel);border:1px solid var(--border);
+    color:var(--text);border-radius:4px;padding:6px 8px;font-size:12.5px;line-height:1.4;
+  }
+  .weapon-pick{display:flex;gap:6px;margin-top:6px;}
+  .weapon-pick select{
+    flex:1;background:var(--panel);border:1px solid var(--border);color:var(--text);
+    border-radius:4px;padding:4px 6px;font-size:12px;
+  }
+  .mini-link-btn{
+    background:none;border:none;color:var(--gold-dim);font-size:10px;cursor:pointer;
+    text-decoration:underline;padding:0;
+  }
+  .mini-link-btn:hover{color:var(--gold);}
+
+  /* ---------- modal ---------- */
+  .modal-bg{
+    display:none;position:fixed;inset:0;background:#0a0b0ecc;z-index:50;
+    align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;
+  }
+  .modal-bg.open{display:flex;}
+  .modal{
+    background:var(--panel);border:1px solid var(--border);border-radius:8px;
+    width:100%;max-width:900px;padding:16px 18px 20px;
+  }
+  .modal-head{display:flex;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap;}
+  .modal-head h2{color:var(--gold);font-size:18px;}
+  .modal-section-title{
+    font-size:13px;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;
+    margin:20px 0 6px;padding-top:14px;border-top:1px solid var(--border);
+  }
+  .modal-section-title:first-of-type{border-top:none;padding-top:0;margin-top:6px;}
+  table.db{width:100%;border-collapse:collapse;margin-top:8px;}
+  table.db th{text-align:left;font-size:11px;color:var(--dim);text-transform:uppercase;padding:5px 6px;border-bottom:1px solid var(--border);}
+  table.db td{padding:5px 6px;border-bottom:1px solid #232734;}
+  table.db input,table.db select,table.db textarea{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    border-radius:4px;padding:4px 5px;
+  }
+  .db-name{width:140px;}
+  .db-num{width:48px;text-align:center;}
+  .db-desc{width:100%;min-height:34px;font-size:12px;}
+  .filebtn{position:relative;overflow:hidden;}
+  .filebtn input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .settings-line{display:flex;gap:14px;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);flex-wrap:wrap;}
+  .settings-line label{color:var(--dim);font-size:12px;}
+  .toast{
+    position:fixed;bottom:74px;left:50%;transform:translateX(-50%);
+    background:#232734;border:1px solid var(--gold-dim);color:var(--text);
+    padding:9px 16px;border-radius:6px;font-size:13px;z-index:100;opacity:0;pointer-events:none;
+    transition:opacity .2s;
+  }
+  .toast.show{opacity:1;}
+  ::placeholder{color:#565c6e;}
+
+  /* ---------- bottom round bar ---------- */
+  .bottombar{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    background:linear-gradient(0deg,#181a22,#14161cee);
+    border-top:1px solid var(--border);
+    padding:10px 16px;display:flex;align-items:center;justify-content:center;gap:14px;
+  }
+  .bottombar .lbl{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.08em;}
+  .bottombar .num{font-family:var(--mono);font-size:26px;color:var(--gold);min-width:34px;text-align:center;}
+  .bottombar .iconbtn{width:32px;height:32px;font-size:17px;}
+
+  @media (max-width:720px){
+    table.enc thead{display:none;}
+    table.enc, table.enc tbody, table.enc tr.main-row, table.enc td{display:block;width:100%;}
+    table.enc tr.main-row{border:1px solid var(--border);border-radius:6px 6px 0 0;padding:8px;background:var(--panel);position:relative;}
+    table.enc tr.detail-row{display:block;width:100%;border-radius:0 0 6px 6px;margin-bottom:8px;}
+    table.enc tr.detail-row td{border-radius:0 0 6px 6px;}
+    table.enc td{padding:3px 0;}
+    .rowbtns{justify-content:flex-end;}
+    .detail-grid{grid-template-columns:1fr;}
+    .detail-preview-wrap{
+      display:flex;flex-direction:column;gap:4px;align-items:flex-end;
+      position:absolute;top:8px;right:8px;max-width:55%;z-index:2;
+    }
+    .wound-note-preview{
+      display:block;font-size:9px;color:var(--text);text-align:right;white-space:pre-line;
+      background:var(--panel-2);border:1px solid var(--border);border-radius:4px;
+      padding:3px 5px;line-height:1.25;cursor:pointer;width:100%;
+      box-shadow:0 2px 6px rgba(0,0,0,.35);
+    }
+
+    table.db thead{display:none;}
+    table.db, table.db tbody, table.db tr, table.db td{display:block;width:100%;}
+    table.db tr{border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:8px;background:var(--panel-2);}
+    table.db td{padding:4px 0;}
+    table.db td[data-label]::before{
+      content:attr(data-label);display:block;font-size:10px;color:var(--dim);
+      text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;
+    }
+    table.db input, table.db select, table.db textarea{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Codex Initiative<small>Arcane Codex &middot; Encounter Helper</small></h1>
+  <button class="btn" id="sortBtn">⇅ Initiative sortieren</button>
+  <div class="spacer"></div>
+  <button class="btn" id="openDb">Datenbank</button>
+  <button class="btn danger" id="clearEnc">Kampf leeren</button>
+</div>
+
+<main>
+
+  <div class="addToggleWrap">
+    <button class="btn primary" id="addToggle">+ Kämpfer hinzufügen</button>
+    <div class="addrow" id="addRow">
+      <select id="dbSelect"><option value="">— aus Datenbank wählen —</option></select>
+      <button class="btn" id="addFromDb">+ Hinzufügen</button>
+      <span class="addrow-sep"></span>
+      <input class="name-input" style="width:120px;border:1px solid var(--border);background:var(--panel-2);" id="quickName" placeholder="Name (schnell)">
+      <select id="quickType" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px;">
+        <option value="spieler">Spieler</option>
+        <option value="gegner" selected>Gegner</option>
+      </select>
+      <input class="num-input" id="quickLp" placeholder="LP" style="width:44px;">
+      <input class="num-input" id="quickBonus" placeholder="Ini" style="width:38px;">
+      <input class="num-input" id="quickKo" placeholder="KO" style="width:38px;">
+      <button class="btn" id="quickAdd">+ Zum Kampf</button>
+    </div>
+  </div>
+
+  <table class="enc" id="encTable">
+    <thead>
+      <tr>
+        <th style="width:20px;"></th>
+        <th style="width:120px;">Name</th>
+        <th style="width:70px;">Typ</th>
+        <th style="width:120px;">Initiative (2W10)</th>
+        <th style="width:130px;">Lebenspunkte</th>
+        <th style="width:120px;">Wundgrad</th>
+        <th style="width:80px;">VW / RS</th>
+        <th style="width:90px;"></th>
+      </tr>
+    </thead>
+    <tbody id="encBody"></tbody>
+  </table>
+  <div class="empty-state" id="emptyState">Noch keine Kämpfer im Encounter. Oben auf "+ Kämpfer hinzufügen" tippen.</div>
+
+</main>
+
+<div class="bottombar">
+  <span class="lbl">Runde</span>
+  <button class="iconbtn" id="roundMinus">–</button>
+  <span class="num" id="roundNum">1</span>
+  <button class="btn primary" id="newRound">+ Neue Runde</button>
+</div>
+
+<!-- DB Modal -->
+<div class="modal-bg" id="dbModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Datenbank</h2>
+      <div class="spacer"></div>
+      <button class="btn filebtn small">Import
+        <input type="file" id="importFile" accept="application/json">
+      </button>
+      <button class="btn small" id="exportBtn">Export</button>
+      <button class="btn small" id="closeDb">Schließen</button>
+    </div>
+
+    <div class="modal-section-title">Kämpfer</div>
+    <table class="db">
+      <thead>
+        <tr><th>Name</th><th>Typ</th><th>LP</th><th>Ini-Bonus</th><th>VW</th><th>RS</th><th>KO</th><th></th></tr>
+      </thead>
+      <tbody id="dbBody"></tbody>
+    </table>
+
+    <div class="addrow open" style="margin-top:12px;">
+      <input class="db-name" id="newTplName" placeholder="Name">
+      <select id="newTplType"><option value="spieler">Spieler</option><option value="gegner" selected>Gegner</option></select>
+      <input class="db-num" id="newTplLp" placeholder="LP">
+      <input class="db-num" id="newTplBonus" placeholder="Ini-Bonus">
+      <input class="db-num" id="newTplVw" placeholder="VW">
+      <input class="db-num" id="newTplRs" placeholder="RS">
+      <input class="db-num" id="newTplKo" placeholder="KO">
+      <button class="btn primary small" id="addTpl">+ Anlegen</button>
+    </div>
+
+    <div class="modal-section-title" style="display:flex;align-items:center;gap:8px;">
+      <span>Waffen</span>
+      <div class="spacer"></div>
+      <button class="btn filebtn small">Import
+        <input type="file" id="importWpFile" accept="application/json">
+      </button>
+      <button class="btn small" id="exportWpBtn">Export</button>
+    </div>
+    <table class="db" id="weaponTable">
+      <thead>
+        <tr><th style="width:160px;">Name</th><th>Beschreibung (Angriffswert, Schaden, ...)</th><th></th></tr>
+      </thead>
+      <tbody id="weaponBody"></tbody>
+    </table>
+    <div class="addrow open" style="margin-top:12px;">
+      <input class="db-name" id="newWpName" placeholder="Waffenname">
+      <input class="db-desc" style="flex:1;min-width:200px;" id="newWpDesc" placeholder="z.B. Angriffswert 12, Schaden 1W6+2">
+      <button class="btn primary small" id="addWp">+ Anlegen</button>
+    </div>
+
+    <div class="settings-line">
+      <label style="flex-basis:100%;">Wundgrad-Mali (optional, eigene Werte):</label>
+      <span class="stat-lbl">WG1</span><input class="num-input stat-input" id="malus1" placeholder="0">
+      <span class="stat-lbl">WG2</span><input class="num-input stat-input" id="malus2" placeholder="–">
+      <span class="stat-lbl">WG3</span><input class="num-input stat-input" id="malus3" placeholder="–">
+      <span class="stat-lbl">WG4</span><input class="num-input stat-input" id="malus4" placeholder="–">
+      <span class="stat-lbl">WG5</span><input class="num-input stat-input" id="malus5" placeholder="–">
+      <span class="stat-lbl">WG6</span><input class="num-input stat-input" id="malus6" placeholder="–">
+      <label style="margin-left:auto;color:var(--dim);">Alle Änderungen werden lokal im Browser gespeichert.</label>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="confirmModal">
+  <div class="modal" style="max-width:380px;">
+    <p id="confirmMsg" style="margin:0 0 16px;line-height:1.5;color:var(--text);"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" id="confirmCancelBtn"></button>
+      <button class="btn danger" id="confirmOkBtn"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const LS_DB = "ac_database_v1";
+  const LS_ENC = "ac_encounter_v1";
+  const LS_SET = "ac_settings_v1";
+  const LS_WEAPONS = "ac_weapons_v1";
+
+  const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+  const numOr = (v,f) => { const n = parseInt(v,10); return isNaN(n) ? f : n; };
+
+  function load(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
+  }
+
+  // ---------- migration: old schema (ruestung/angriff) -> vw/rs/ko + freetext ----------
+  function migrateTemplate(t){
+    return {
+      id: t.id || uid(),
+      name: t.name || "Unbenannt",
+      type: t.type === "spieler" ? "spieler" : "gegner",
+      lpMax: numOr(t.lpMax, 0),
+      initBonus: numOr(t.initBonus, 0),
+      vw: t.vw !== undefined ? numOr(t.vw, 0) : numOr(t.ruestung, 0),
+      rs: t.rs !== undefined ? numOr(t.rs, 0) : 0,
+      ko: numOr(t.ko, 0),
+      woundNotes: t.woundNotes || "",
+      weaponText: t.weaponText || (t.angriff !== undefined ? `(migriert) Angriffswert: ${t.angriff}` : ""),
+      skillsText: t.skillsText || ""
+    };
+  }
+  function migrateCombatant(c){
+    return {
+      id: c.id || uid(),
+      name: c.name || "Unbenannt",
+      type: c.type === "spieler" ? "spieler" : "gegner",
+      lpMax: numOr(c.lpMax, 0),
+      lpCurrent: numOr(c.lpCurrent, numOr(c.lpMax,0)),
+      initBonus: numOr(c.initBonus, 0),
+      initValue: numOr(c.initValue, 0),
+      vw: c.vw !== undefined ? numOr(c.vw, 0) : numOr(c.ruestung, 0),
+      rs: c.rs !== undefined ? numOr(c.rs, 0) : 0,
+      ko: numOr(c.ko, 0),
+      woundNotes: c.woundNotes !== undefined ? c.woundNotes : "",
+      weaponText: c.weaponText || (c.angriff !== undefined ? `(migriert) Angriffswert: ${c.angriff}` : ""),
+      skillsText: c.skillsText || "",
+      expanded: !!c.expanded
+    };
+  }
+
+  function migrateWeapon(w){
+    return {
+      id: w.id || uid(),
+      name: w.name || "Unbenannt",
+      description: w.description || ""
+    };
+  }
+
+  let db = load(LS_DB, []).map(migrateTemplate);
+  let weapons = load(LS_WEAPONS, []).map(migrateWeapon);
+  let encounter = load(LS_ENC, { round: 1, combatants: [] });
+  encounter.combatants = (encounter.combatants || []).map(migrateCombatant);
+  if(!encounter.round) encounter.round = 1;
+  let settings = load(LS_SET, { maluses: [] });
+  if(!settings.maluses) settings.maluses = [];
+
+  function saveDb(){ localStorage.setItem(LS_DB, JSON.stringify(db)); }
+  function saveWeapons(){ localStorage.setItem(LS_WEAPONS, JSON.stringify(weapons)); }
+  function saveEnc(){ localStorage.setItem(LS_ENC, JSON.stringify(encounter)); }
+  function saveSet(){ localStorage.setItem(LS_SET, JSON.stringify(settings)); }
+
+  function toast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._h);
+    toast._h = setTimeout(()=>t.classList.remove("show"), 1800);
+  }
+
+  function showConfirm(message, opts){
+    opts = opts || {};
+    const okText = opts.okText || "Ja, löschen";
+    const cancelText = opts.cancelText || "Abbrechen";
+    const okClass = opts.okClass || "danger";
+    const modal = document.getElementById("confirmModal");
+    document.getElementById("confirmMsg").textContent = message;
+    const okBtn = document.getElementById("confirmOkBtn");
+    const cancelBtn = document.getElementById("confirmCancelBtn");
+    okBtn.textContent = okText;
+    cancelBtn.textContent = cancelText;
+    okBtn.className = "btn " + okClass;
+    modal.classList.add("open");
+    function cleanup(){
+      modal.classList.remove("open");
+      okBtn.removeEventListener("click", okHandler);
+      cancelBtn.removeEventListener("click", cancelHandler);
+    }
+    function okHandler(){ cleanup(); if(opts.onOk) opts.onOk(); }
+    function cancelHandler(){ cleanup(); if(opts.onCancel) opts.onCancel(); }
+    okBtn.addEventListener("click", okHandler);
+    cancelBtn.addEventListener("click", cancelHandler);
+  }
+
+  function escAttr(s){
+    return String(s ?? "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+  }
+  function escHtml(s){
+    return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  // ---------- wound levels ----------
+  // Regel: LP sind in 6 Wundgrade unterteilt, jeweils in Hoehe des Konstitutionswertes (KO).
+  const wgColors = [
+    { bg:"#153328", fg:"#6fd9a3" },
+    { bg:"#1f3a1a", fg:"#93d96f" },
+    { bg:"#33350f", fg:"#c7d95f" },
+    { bg:"#3a3113", fg:"#d9c25f" },
+    { bg:"#3a2213", fg:"#e0975f" },
+    { bg:"#3a1712", fg:"#e07a68" }
+  ];
+
+  function woundGradeNum(cur, max, ko){
+    if(max <= 0) return 1;
+    const k = (ko && ko > 0) ? ko : Math.max(1, Math.round(max / 6));
+    const missing = Math.max(0, max - cur);
+    let grade = Math.floor(missing / k) + 1;
+    if(grade > 6) grade = 6;
+    return grade;
+  }
+
+  function woundInfo(cur, max, ko){
+    if(max <= 0) return { label:"—", bg:"#232734", fg:"#8d93a6" };
+    const grade = woundGradeNum(cur, max, ko);
+    const col = wgColors[grade - 1];
+    const maluses = settings.maluses || [];
+    const m = maluses[grade - 1];
+    let label = `Wundgrad ${grade}`;
+    if(m !== undefined && m !== null && m !== ""){
+      label += ` (${m > 0 ? "+" : ""}${m})`;
+    }
+    if(cur <= 0){
+      label += " · bewusstlos";
+    }
+    return { label, bg: col.bg, fg: col.fg };
+  }
+
+  function malusTag(grade){
+    const m = (settings.maluses || [])[grade - 1];
+    if(m === undefined || m === null || m === "") return "";
+    return `:${m > 0 ? "+" : ""}${m}`;
+  }
+
+  function generateWoundText(lpMax, ko){
+    if(!lpMax || !ko) return "";
+    const lines = [];
+    for(let g = 1; g <= 5; g++){
+      const lower = (g-1) * ko;
+      const upper = g * ko - 1;
+      lines.push(`WG${g}${malusTag(g)}: ${lower}–${upper} erlittener Schaden`);
+    }
+    const wg6lower = 5 * ko;
+    lines.push(`WG6${malusTag(6)}: ab ${wg6lower} erlittener Schaden (bewusstlos bei 0 LP oder weniger)`);
+    return lines.join("\n");
+  }
+
+  function rollDice2d10(){
+    const d = () => Math.floor(Math.random()*10)+1;
+    return d() + d();
+  }
+
+  // ---------- rendering: encounter ----------
+  const encBody = document.getElementById("encBody");
+  const emptyState = document.getElementById("emptyState");
+  const encTable = document.getElementById("encTable");
+
+  function previewBox(text, icon){
+    if(!text || !text.trim()) return "";
+    const lines = text.split("\n");
+    const shown = lines.slice(0, 7).join("\n") + (lines.length > 7 ? "\n…" : "");
+    return `<span class="wound-note-preview" data-action="toggleExpand" title="Antippen zum Aufklappen">${escHtml(icon + " " + shown)}</span>`;
+  }
+
+  function buildPreviewWrap(c){
+    const boxes = previewBox(c.woundNotes, "🩹") + previewBox(c.weaponText, "⚔") + previewBox(c.skillsText, "🎯");
+    if(!boxes) return "";
+    return `<div class="detail-preview-wrap">${boxes}</div>`;
+  }
+
+  function renderEncounter(){
+    document.getElementById("roundNum").textContent = encounter.round;
+    encBody.innerHTML = "";
+    if(encounter.combatants.length === 0){
+      encTable.style.display = "none";
+      emptyState.style.display = "block";
+      return;
+    }
+    encTable.style.display = "table";
+    emptyState.style.display = "none";
+
+    encounter.combatants.forEach(c => {
+      const wi = woundInfo(c.lpCurrent, c.lpMax, c.ko);
+
+      const tr = document.createElement("tr");
+      tr.className = "main-row";
+      tr.draggable = true;
+      tr.dataset.id = c.id;
+      tr.innerHTML = `
+        <td><span class="drag-handle" title="Ziehen zum Verschieben">⋮⋮</span></td>
+        <td>
+          <input class="name-input" data-field="name" value="${escAttr(c.name)}">
+          ${(!c.expanded) ? buildPreviewWrap(c) : ""}
+        </td>
+        <td><span class="type-pill ${c.type}" data-action="toggleType">${c.type === "spieler" ? "Spieler" : "Gegner"}</span></td>
+        <td>
+          <div class="init-cell">
+            <button class="iconbtn" data-action="rollInit" title="Initiative würfeln (2W10 + Bonus)">🎲</button>
+            <input class="num-input" data-field="initValue" type="number" value="${c.initValue ?? ""}">
+            <span class="bonus-tag">+<input class="num-input" style="width:26px;padding:2px;" data-field="initBonus" type="number" value="${c.initBonus ?? 0}"></span>
+          </div>
+        </td>
+        <td>
+          <div class="lp-cell">
+            <button class="stepbtn" data-action="lpMinus">–</button>
+            <input class="num-input" data-field="lpCurrent" type="number" value="${c.lpCurrent}">
+            <button class="stepbtn" data-action="lpPlus">+</button>
+          </div>
+        </td>
+        <td><span class="wound-badge" style="background:${wi.bg};color:${wi.fg};">${wi.label}</span></td>
+        <td>
+          <div class="stat-stack-wrap">
+            <div class="stat-stack">
+              <span class="stat-lbl">VW</span>
+              <input class="num-input stat-input" data-field="vw" type="number" value="${c.vw ?? 0}">
+            </div>
+            <div class="stat-stack">
+              <span class="stat-lbl">RS</span>
+              <input class="num-input stat-input" data-field="rs" type="number" value="${c.rs ?? 0}">
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="rowbtns">
+            <button class="expand-btn" data-action="toggleExpand" title="Notizen ein-/ausklappen">${c.expanded ? "▾" : "▸"}</button>
+            <button class="iconbtn" data-action="dup" title="Duplizieren">⧉</button>
+            <button class="iconbtn" data-action="del" title="Entfernen">✕</button>
+          </div>
+        </td>
+      `;
+      encBody.appendChild(tr);
+
+      if(c.expanded){
+        const dtr = document.createElement("tr");
+        dtr.className = "detail-row";
+        dtr.dataset.id = c.id;
+        dtr.innerHTML = `
+          <td colspan="8">
+            <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span class="stat-lbl" style="font-size:11px;">Max. LP</span>
+              <input class="num-input" style="width:56px;" data-field="lpMax" type="number" value="${c.lpMax}">
+              <span style="color:var(--dim);font-size:11px;">(aktuell: ${c.lpCurrent})</span>
+              <span class="stat-lbl" style="font-size:11px;margin-left:10px;">KO</span>
+              <input class="num-input" style="width:44px;" data-field="ko" type="number" value="${c.ko ?? 0}">
+            </div>
+            <div class="detail-grid">
+              <div class="detail-field">
+                <label>Wundgrade
+                  <button class="mini-link-btn" data-action="regenWounds">↻ neu berechnen (LP-Max &amp; KO)</button>
+                </label>
+                <textarea data-field="woundNotes" placeholder="Eigene Notizen zu den Wundgraden...">${escHtml(c.woundNotes)}</textarea>
+              </div>
+              <div class="detail-field">
+                <label>Waffen / Angriff</label>
+                <textarea data-field="weaponText" placeholder="Name, Angriffswert, Schaden...">${escHtml(c.weaponText)}</textarea>
+                <div class="weapon-pick">
+                  <select data-role="weaponSelect">
+                    <option value="">— aus Waffen-Datenbank —</option>
+                    ${weapons.map(w => `<option value="${w.id}">${escAttr(w.name)}</option>`).join("")}
+                  </select>
+                  <button class="btn small" data-action="insertWeapon">Einfügen</button>
+                </div>
+              </div>
+              <div class="detail-field">
+                <label>Fertigkeiten</label>
+                <textarea data-field="skillsText" placeholder="Relevante Fertigkeiten...">${escHtml(c.skillsText)}</textarea>
+              </div>
+            </div>
+          </td>
+        `;
+        encBody.appendChild(dtr);
+      }
+    });
+  }
+
+  encBody.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-action]");
+    if(!btn) return;
+    const row = e.target.closest("tr");
+    const id = row.dataset.id;
+    const c = encounter.combatants.find(x => x.id === id);
+    if(!c) return;
+    const action = btn.dataset.action;
+
+    if(action === "rollInit"){
+      const roll = rollDice2d10();
+      c.initValue = roll + (c.initBonus || 0);
+      toast(`${c.name}: 2W10 ${roll} + ${c.initBonus||0} = ${c.initValue}`);
+    } else if(action === "toggleType"){
+      c.type = c.type === "spieler" ? "gegner" : "spieler";
+    } else if(action === "lpMinus"){
+      c.lpCurrent = Math.max(0, c.lpCurrent - 1);
+    } else if(action === "lpPlus"){
+      c.lpCurrent = Math.min(c.lpMax, c.lpCurrent + 1);
+    } else if(action === "dup"){
+      const copy = JSON.parse(JSON.stringify(c));
+      copy.id = uid();
+      copy.name = nextCopyName(c.name);
+      copy.expanded = false;
+      const idx = encounter.combatants.indexOf(c);
+      encounter.combatants.splice(idx + 1, 0, copy);
+    } else if(action === "del"){
+      encounter.combatants = encounter.combatants.filter(x => x.id !== id);
+    } else if(action === "toggleExpand"){
+      c.expanded = !c.expanded;
+    } else if(action === "regenWounds"){
+      c.woundNotes = generateWoundText(c.lpMax, c.ko);
+    } else if(action === "insertWeapon"){
+      const sel = row.querySelector('[data-role="weaponSelect"]');
+      const w = weapons.find(x => x.id === sel.value);
+      if(w){
+        c.weaponText = (c.weaponText ? c.weaponText + "\n" : "") + `${w.name}: ${w.description}`;
+      }
+    }
+    saveEnc();
+    renderEncounter();
+  });
+
+  encBody.addEventListener("input", (e) => {
+    const field = e.target.dataset.field;
+    if(!field) return;
+    const row = e.target.closest("tr");
+    const id = row.dataset.id;
+    const c = encounter.combatants.find(x => x.id === id);
+    if(!c) return;
+    const textFields = ["name","woundNotes","weaponText","skillsText"];
+    if(textFields.includes(field)){
+      c[field] = e.target.value;
+    } else {
+      let v = parseInt(e.target.value, 10);
+      if(isNaN(v)) v = 0;
+      c[field] = v;
+      if(field === "lpMax" && c.lpCurrent > c.lpMax) c.lpCurrent = c.lpMax;
+    }
+    saveEnc();
+    if(field === "lpCurrent" || field === "lpMax" || field === "ko"){
+      const badgeRow = encBody.querySelector(`tr.main-row[data-id="${id}"]`);
+      if(badgeRow) refreshRowSoft(badgeRow, c);
+    }
+  });
+
+  function refreshRowSoft(tr, c){
+    const wi = woundInfo(c.lpCurrent, c.lpMax, c.ko);
+    const badge = tr.querySelector(".wound-badge");
+    badge.textContent = wi.label;
+    badge.style.background = wi.bg;
+    badge.style.color = wi.fg;
+  }
+
+  // ---------- drag & drop reorder ----------
+  let dragId = null;
+  encBody.addEventListener("dragstart", (e) => {
+    const row = e.target.closest("tr.main-row");
+    if(!row) return;
+    dragId = row.dataset.id;
+    e.dataTransfer.effectAllowed = "move";
+  });
+  encBody.addEventListener("dragover", (e) => {
+    const row = e.target.closest("tr.main-row");
+    if(!row) return;
+    e.preventDefault();
+    encBody.querySelectorAll("tr.main-row.drag-over").forEach(r => r.classList.remove("drag-over"));
+    if(row.dataset.id !== dragId) row.classList.add("drag-over");
+  });
+  encBody.addEventListener("dragleave", (e) => {
+    const row = e.target.closest("tr.main-row");
+    if(row) row.classList.remove("drag-over");
+  });
+  encBody.addEventListener("drop", (e) => {
+    const row = e.target.closest("tr.main-row");
+    if(!row) return;
+    e.preventDefault();
+    encBody.querySelectorAll("tr.main-row.drag-over").forEach(r => r.classList.remove("drag-over"));
+    const targetId = row.dataset.id;
+    if(!dragId || dragId === targetId) return;
+    const fromIdx = encounter.combatants.findIndex(x => x.id === dragId);
+    const toIdx = encounter.combatants.findIndex(x => x.id === targetId);
+    if(fromIdx === -1 || toIdx === -1) return;
+    const [moved] = encounter.combatants.splice(fromIdx, 1);
+    encounter.combatants.splice(toIdx, 0, moved);
+    dragId = null;
+    saveEnc();
+    renderEncounter();
+  });
+  encBody.addEventListener("dragend", () => {
+    encBody.querySelectorAll("tr.main-row.drag-over").forEach(r => r.classList.remove("drag-over"));
+  });
+
+  function nextCopyName(name){
+    const m = name.match(/^(.*?)(\d+)$/);
+    if(m){
+      return m[1] + (parseInt(m[2],10) + 1);
+    }
+    return name.trim() + " 2";
+  }
+
+  // ---------- round counter / sort / clear ----------
+  document.getElementById("newRound").onclick = () => { encounter.round++; saveEnc(); renderEncounter(); };
+  document.getElementById("roundMinus").onclick = () => { encounter.round = Math.max(1, encounter.round - 1); saveEnc(); renderEncounter(); };
+  document.getElementById("sortBtn").onclick = () => {
+    encounter.combatants.sort((a,b) => (b.initValue||0) - (a.initValue||0));
+    saveEnc();
+    renderEncounter();
+    toast("Initiative sortiert");
+  };
+  document.getElementById("clearEnc").onclick = () => {
+    if(encounter.combatants.length === 0) return;
+    showConfirm("Aktuellen Kampf wirklich leeren?", {
+      okText: "Ja, leeren",
+      onOk: () => {
+        encounter.combatants = [];
+        encounter.round = 1;
+        saveEnc();
+        renderEncounter();
+      }
+    });
+  };
+
+  // ---------- add-menu toggle ----------
+  const addToggle = document.getElementById("addToggle");
+  const addRow = document.getElementById("addRow");
+  addToggle.onclick = () => {
+    addRow.classList.toggle("open");
+    addToggle.textContent = addRow.classList.contains("open") ? "– Hinzufügen ausblenden" : "+ Kämpfer hinzufügen";
+  };
+
+  // ---------- add from db / quick add ----------
+  const dbSelect = document.getElementById("dbSelect");
+  function renderDbSelect(){
+    dbSelect.innerHTML = '<option value="">— aus Datenbank wählen —</option>';
+    db.forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t.id;
+      opt.textContent = `${t.name} (${t.type === "spieler" ? "S" : "G"})`;
+      dbSelect.appendChild(opt);
+    });
+  }
+
+  function combatantFromTemplate(t){
+    return {
+      id: uid(),
+      name: t.name,
+      type: t.type,
+      lpMax: t.lpMax,
+      lpCurrent: t.lpMax,
+      initBonus: t.initBonus,
+      initValue: 0,
+      vw: t.vw,
+      rs: t.rs,
+      ko: t.ko,
+      woundNotes: (t.woundNotes && t.woundNotes.trim()) ? t.woundNotes : generateWoundText(t.lpMax, t.ko),
+      weaponText: t.weaponText || "",
+      skillsText: t.skillsText || "",
+      expanded: false
+    };
+  }
+
+  document.getElementById("addFromDb").onclick = () => {
+    const id = dbSelect.value;
+    if(!id) return;
+    const t = db.find(x => x.id === id);
+    if(!t) return;
+    let c = combatantFromTemplate(t);
+    const existing = encounter.combatants.filter(x => x.name.replace(/\s+\d+$/,"") === t.name);
+    if(existing.length){
+      c.name = t.name + " " + (existing.length + 1);
+    }
+    encounter.combatants.push(c);
+    saveEnc();
+    renderEncounter();
+    toast(`${c.name} hinzugefügt`);
+  };
+
+  document.getElementById("quickAdd").onclick = () => {
+    const name = document.getElementById("quickName").value.trim();
+    if(!name){ toast("Bitte einen Namen eingeben"); return; }
+    const type = document.getElementById("quickType").value;
+    const lp = parseInt(document.getElementById("quickLp").value, 10) || 0;
+    const bonus = parseInt(document.getElementById("quickBonus").value, 10) || 0;
+    const ko = parseInt(document.getElementById("quickKo").value, 10) || 0;
+    encounter.combatants.push({
+      id: uid(), name, type, lpMax: lp, lpCurrent: lp,
+      initBonus: bonus, initValue: 0, vw: 0, rs: 0, ko,
+      woundNotes: generateWoundText(lp, ko), weaponText: "", skillsText: "", expanded: false
+    });
+    document.getElementById("quickName").value = "";
+    document.getElementById("quickLp").value = "";
+    document.getElementById("quickBonus").value = "";
+    document.getElementById("quickKo").value = "";
+    saveEnc();
+    renderEncounter();
+  };
+
+  // ---------- database modal: characters ----------
+  const dbModal = document.getElementById("dbModal");
+  const dbBody = document.getElementById("dbBody");
+  const dbExpandedIds = new Set();
+
+  document.getElementById("openDb").onclick = () => { dbModal.classList.add("open"); renderDbTable(); renderWeaponTable(); };
+  document.getElementById("closeDb").onclick = () => { dbModal.classList.remove("open"); };
+  dbModal.addEventListener("click", (e) => { if(e.target === dbModal) dbModal.classList.remove("open"); });
+
+  function renderDbTable(){
+    dbBody.innerHTML = "";
+    db.forEach(t => {
+      const tr = document.createElement("tr");
+      const isOpen = dbExpandedIds.has(t.id);
+      tr.innerHTML = `
+        <td data-label="Name"><input class="db-name" data-f="name" value="${escAttr(t.name)}"></td>
+        <td data-label="Typ">
+          <select data-f="type">
+            <option value="spieler" ${t.type==="spieler"?"selected":""}>Spieler</option>
+            <option value="gegner" ${t.type==="gegner"?"selected":""}>Gegner</option>
+          </select>
+        </td>
+        <td data-label="LP"><input class="db-num" data-f="lpMax" type="number" value="${t.lpMax}"></td>
+        <td data-label="Ini-Bonus"><input class="db-num" data-f="initBonus" type="number" value="${t.initBonus}"></td>
+        <td data-label="VW"><input class="db-num" data-f="vw" type="number" value="${t.vw||0}"></td>
+        <td data-label="RS"><input class="db-num" data-f="rs" type="number" value="${t.rs||0}"></td>
+        <td data-label="KO"><input class="db-num" data-f="ko" type="number" value="${t.ko||0}"></td>
+        <td>
+          <div class="rowbtns">
+            <button class="expand-btn" data-action="toggleTplExpand" title="Waffen zuweisen">${isOpen ? "▾" : "▸"}⚔</button>
+            <button class="iconbtn" data-action="dupTpl" title="Duplizieren">⧉</button>
+            <button class="iconbtn" data-action="delTpl" title="Löschen">✕</button>
+          </div>
+        </td>
+      `;
+      tr.dataset.id = t.id;
+      dbBody.appendChild(tr);
+
+      if(isOpen){
+        const dtr = document.createElement("tr");
+        dtr.dataset.id = t.id;
+        dtr.innerHTML = `
+          <td colspan="8">
+            <div class="detail-field">
+              <label>Waffen / Angriff dieses Kämpfers (wird beim Hinzufügen zum Kampf direkt übernommen)</label>
+              <textarea data-f="weaponText" placeholder="Name, Angriffswert, Schaden...">${escHtml(t.weaponText)}</textarea>
+              <div class="weapon-pick">
+                <select data-role="weaponSelectTpl">
+                  <option value="">— aus Waffen-Datenbank —</option>
+                  ${weapons.map(w => `<option value="${w.id}">${escAttr(w.name)}</option>`).join("")}
+                </select>
+                <button class="btn small" data-action="insertWeaponTpl">Einfügen</button>
+              </div>
+            </div>
+          </td>
+        `;
+        dbBody.appendChild(dtr);
+      }
+    });
+  }
+
+  dbBody.addEventListener("input", (e) => {
+    const f = e.target.dataset.f;
+    if(!f) return;
+    const tr = e.target.closest("tr");
+    const t = db.find(x => x.id === tr.dataset.id);
+    if(!t) return;
+    if(f === "name" || f === "type" || f === "weaponText"){
+      t[f] = e.target.value;
+    } else {
+      t[f] = parseInt(e.target.value,10) || 0;
+    }
+    saveDb();
+    renderDbSelect();
+  });
+
+  dbBody.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-action]");
+    if(!btn) return;
+    const tr = e.target.closest("tr");
+    const t = db.find(x => x.id === tr.dataset.id);
+    if(!t) return;
+    if(btn.dataset.action === "delTpl"){
+      showConfirm(`"${t.name}" wirklich aus der Datenbank löschen?`, {
+        onOk: () => {
+          db = db.filter(x => x.id !== t.id);
+          dbExpandedIds.delete(t.id);
+          saveDb();
+          renderDbTable();
+          renderDbSelect();
+        }
+      });
+    } else if(btn.dataset.action === "dupTpl"){
+      const copy = JSON.parse(JSON.stringify(t));
+      copy.id = uid();
+      copy.name = nextCopyName(t.name);
+      db.splice(db.indexOf(t)+1, 0, copy);
+      saveDb();
+      renderDbTable();
+      renderDbSelect();
+    } else if(btn.dataset.action === "toggleTplExpand"){
+      if(dbExpandedIds.has(t.id)) dbExpandedIds.delete(t.id); else dbExpandedIds.add(t.id);
+      renderDbTable();
+    } else if(btn.dataset.action === "insertWeaponTpl"){
+      const sel = tr.querySelector('[data-role="weaponSelectTpl"]');
+      const w = weapons.find(x => x.id === sel.value);
+      if(w){
+        t.weaponText = (t.weaponText ? t.weaponText + "\n" : "") + `${w.name}: ${w.description}`;
+        saveDb();
+        renderDbTable();
+      }
+    }
+  });
+
+  document.getElementById("addTpl").onclick = () => {
+    const name = document.getElementById("newTplName").value.trim();
+    if(!name){ toast("Bitte einen Namen eingeben"); return; }
+    db.push({
+      id: uid(),
+      name,
+      type: document.getElementById("newTplType").value,
+      lpMax: parseInt(document.getElementById("newTplLp").value,10) || 0,
+      initBonus: parseInt(document.getElementById("newTplBonus").value,10) || 0,
+      vw: parseInt(document.getElementById("newTplVw").value,10) || 0,
+      rs: parseInt(document.getElementById("newTplRs").value,10) || 0,
+      ko: parseInt(document.getElementById("newTplKo").value,10) || 0,
+      woundNotes: "", weaponText: "", skillsText: ""
+    });
+    ["newTplName","newTplLp","newTplBonus","newTplVw","newTplRs","newTplKo"].forEach(id => document.getElementById(id).value = "");
+    saveDb();
+    renderDbTable();
+    renderDbSelect();
+  };
+
+  // ---------- database modal: weapons ----------
+  const weaponBody = document.getElementById("weaponBody");
+
+  function renderWeaponTable(){
+    weaponBody.innerHTML = "";
+    weapons.forEach(w => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td data-label="Name"><input class="db-name" data-f="name" value="${escAttr(w.name)}"></td>
+        <td data-label="Beschreibung"><textarea class="db-desc" data-f="description">${escHtml(w.description)}</textarea></td>
+        <td><button class="iconbtn" data-action="delWp" title="Löschen">✕</button></td>
+      `;
+      tr.dataset.id = w.id;
+      weaponBody.appendChild(tr);
+    });
+  }
+
+  weaponBody.addEventListener("input", (e) => {
+    const f = e.target.dataset.f;
+    if(!f) return;
+    const tr = e.target.closest("tr");
+    const w = weapons.find(x => x.id === tr.dataset.id);
+    if(!w) return;
+    w[f] = e.target.value;
+    saveWeapons();
+  });
+
+  weaponBody.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-action='delWp']");
+    if(!btn) return;
+    const tr = e.target.closest("tr");
+    const w = weapons.find(x => x.id === tr.dataset.id);
+    if(!w) return;
+    showConfirm(`"${w.name}" wirklich löschen?`, {
+      onOk: () => {
+        weapons = weapons.filter(x => x.id !== w.id);
+        saveWeapons();
+        renderWeaponTable();
+        renderDbTable();
+      }
+    });
+  });
+
+  document.getElementById("addWp").onclick = () => {
+    const name = document.getElementById("newWpName").value.trim();
+    const description = document.getElementById("newWpDesc").value.trim();
+    if(!name){ toast("Bitte einen Waffennamen eingeben"); return; }
+    weapons.push({ id: uid(), name, description });
+    document.getElementById("newWpName").value = "";
+    document.getElementById("newWpDesc").value = "";
+    saveWeapons();
+    renderWeaponTable();
+    renderDbTable();
+  };
+
+  document.getElementById("exportWpBtn").onclick = () => {
+    const blob = new Blob([JSON.stringify(weapons, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "arcane-codex-waffen.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  document.getElementById("importWpFile").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const data = JSON.parse(reader.result);
+        if(!Array.isArray(data)) throw new Error("Kein Array");
+        const cleaned = data.map(migrateWeapon);
+        showConfirm(`${cleaned.length} Waffen gefunden. Zur bestehenden Datenbank hinzufügen, oder komplett ersetzen?`, {
+          okText: "Hinzufügen",
+          cancelText: "Ersetzen",
+          okClass: "primary",
+          onOk: () => {
+            weapons = weapons.concat(cleaned);
+            saveWeapons();
+            renderWeaponTable();
+            toast("Waffen-Import erfolgreich");
+          },
+          onCancel: () => {
+            weapons = cleaned;
+            saveWeapons();
+            renderWeaponTable();
+            toast("Waffen-Datenbank ersetzt");
+          }
+        });
+      }catch(err){
+        toast("Import fehlgeschlagen: kein gültiges Waffen-JSON.");
+      }
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  // ---------- import / export (Kämpfer-DB) ----------
+  document.getElementById("exportBtn").onclick = () => {
+    const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "arcane-codex-datenbank.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  document.getElementById("importFile").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const data = JSON.parse(reader.result);
+        if(!Array.isArray(data)) throw new Error("Kein Array");
+        const cleaned = data.map(migrateTemplate);
+        showConfirm(`${cleaned.length} Einträge gefunden. Zur bestehenden Datenbank hinzufügen, oder komplett ersetzen?`, {
+          okText: "Hinzufügen",
+          cancelText: "Ersetzen",
+          okClass: "primary",
+          onOk: () => {
+            db = db.concat(cleaned);
+            saveDb();
+            renderDbTable();
+            renderDbSelect();
+            toast("Import erfolgreich");
+          },
+          onCancel: () => {
+            db = cleaned;
+            saveDb();
+            renderDbTable();
+            renderDbSelect();
+            toast("Datenbank ersetzt");
+          }
+        });
+      }catch(err){
+        toast("Import fehlgeschlagen: kein gültiges Datenbank-JSON.");
+      }
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  // ---------- seed example data on first run ----------
+  if(!settings.maluses || settings.maluses.length === 0){
+    // Beispielwerte (keine offizielle Regelquelle) - steigender Malus je Wundgrad, frei anpassbar.
+    settings.maluses = [0, -1, -2, -3, -4, -5];
+    saveSet();
+  }
+
+  if(weapons.length === 0){
+    weapons = [
+      { id: uid(), name: "Kurzschwert", description: "Angriffswert 12, Schaden 1W6+2" },
+      { id: uid(), name: "Langbogen", description: "Angriffswert 10, Schaden 1W8, Reichweite mittel" },
+      { id: uid(), name: "Ork-Axt", description: "Angriffswert 11, Schaden 1W10+3, zweihändig" }
+    ];
+    saveWeapons();
+  }
+
+  if(db.length === 0){
+    const goblinLp = 48, goblinKo = 8;
+    const orkLp = 72, orkKo = 12;
+    const heldLp = 72, heldKo = 12;
+    db = [
+      {
+        id: uid(), name: "Goblin", type: "gegner", lpMax: goblinLp, initBonus: 1, vw: 22, rs: 1, ko: goblinKo,
+        woundNotes: generateWoundText(goblinLp, goblinKo),
+        weaponText: "Kurzschwert: Angriffswert 12, Schaden 1W6+2",
+        skillsText: "Schleichen +2, Wildnisgespür +1"
+      },
+      {
+        id: uid(), name: "Ork-Krieger", type: "gegner", lpMax: orkLp, initBonus: 0, vw: 25, rs: 3, ko: orkKo,
+        woundNotes: generateWoundText(orkLp, orkKo),
+        weaponText: "Ork-Axt: Angriffswert 11, Schaden 1W10+3, zweihändig",
+        skillsText: "Einschüchtern +3"
+      },
+      {
+        id: uid(), name: "Held", type: "spieler", lpMax: heldLp, initBonus: 2, vw: 26, rs: 2, ko: heldKo,
+        woundNotes: generateWoundText(heldLp, heldKo),
+        weaponText: "Langbogen: Angriffswert 10, Schaden 1W8, Reichweite mittel",
+        skillsText: "Heilkunde +2, Klettern +1"
+      }
+    ];
+    saveDb();
+  }
+
+  // ---------- malus settings wiring ----------
+  for(let i = 1; i <= 6; i++){
+    const el = document.getElementById("malus" + i);
+    el.value = settings.maluses[i-1] ?? "";
+    el.addEventListener("input", () => {
+      settings.maluses[i-1] = el.value === "" ? "" : (parseInt(el.value,10) || 0);
+      saveSet();
+      renderEncounter();
+    });
+  }
+
+  renderDbSelect();
+  renderEncounter();
+})();
+</script>
+</body>
+</html>
