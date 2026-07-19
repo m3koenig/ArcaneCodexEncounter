@@ -101,6 +101,8 @@
   table.enc td{padding:6px 8px;vertical-align:middle;}
   .drag-handle{cursor:grab;color:var(--dim);font-size:14px;user-select:none;padding:0 2px;}
   .drag-handle:active{cursor:grabbing;}
+  .cell-name{display:flex;align-items:center;gap:2px;}
+  .cell-preview{display:none;}
   .name-input{
     background:transparent;border:1px solid transparent;color:var(--text);
     font-size:14px;font-weight:600;padding:4px 6px;border-radius:4px;width:140px;
@@ -189,6 +191,15 @@
     margin:20px 0 6px;padding-top:14px;border-top:1px solid var(--border);
   }
   .modal-section-title:first-of-type{border-top:none;padding-top:0;margin-top:6px;}
+  .tab-bar{display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:2px;}
+  .tab-btn{
+    background:transparent;border:none;color:var(--dim);padding:9px 14px;font-size:13px;font-weight:600;
+    border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+  .tab-btn:hover{color:var(--text);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
   table.db{width:100%;border-collapse:collapse;margin-top:8px;}
   table.db th{text-align:left;font-size:11px;color:var(--dim);text-transform:uppercase;padding:5px 6px;border-bottom:1px solid var(--border);}
   table.db td{padding:5px 6px;border-bottom:1px solid #232734;}
@@ -225,21 +236,51 @@
 
   @media (max-width:720px){
     table.enc thead{display:none;}
-    table.enc, table.enc tbody, table.enc tr.main-row, table.enc td{display:block;width:100%;}
-    table.enc tr.main-row{border:1px solid var(--border);border-radius:6px 6px 0 0;padding:8px;background:var(--panel);position:relative;}
+    table.enc, table.enc tbody{display:block;width:100%;}
+    table.enc tr.main-row{
+      display:grid;
+      grid-template-columns:1fr 40%;
+      grid-template-areas:
+        "name   name"
+        "type   prev"
+        "init   prev"
+        "lp     prev"
+        "wound  prev"
+        "stats  prev"
+        "actions prev";
+      column-gap:8px;row-gap:2px;
+      border:1px solid var(--border);border-radius:6px 6px 0 0;padding:8px;background:var(--panel);
+    }
+    table.enc tr.main-row td{padding:3px 0;}
     table.enc tr.detail-row{display:block;width:100%;border-radius:0 0 6px 6px;margin-bottom:8px;}
-    table.enc tr.detail-row td{border-radius:0 0 6px 6px;}
-    table.enc td{padding:3px 0;}
+    table.enc tr.detail-row td{border-radius:0 0 6px 6px;padding:6px 8px;}
+    .cell-name{grid-area:name;}
+    .cell-type{grid-area:type;}
+    .cell-init{grid-area:init;}
+    .cell-lp{grid-area:lp;}
+    .cell-wound{grid-area:wound;}
+    .cell-stats{grid-area:stats;}
+    .cell-actions{grid-area:actions;}
+    .cell-preview{grid-area:prev;display:block;}
     .rowbtns{justify-content:flex-end;}
     .detail-grid{grid-template-columns:1fr;}
+    table.enc tr.main-row .name-input{
+      width:100%;font-size:17px;font-weight:700;font-family:Georgia,"Iowan Old Style",serif;
+      color:var(--gold);padding:2px 0 6px;border:none;border-bottom:1px solid var(--border);
+      background:transparent;border-radius:0;
+    }
+    table.enc tr.main-row .name-input:hover,
+    table.enc tr.main-row .name-input:focus{
+      background:transparent;border-bottom-color:var(--gold-dim);
+    }
     .detail-preview-wrap{
-      display:flex;flex-direction:column;gap:4px;align-items:flex-end;
-      position:absolute;top:8px;right:8px;max-width:55%;z-index:2;
+      display:flex;flex-direction:column;gap:4px;align-items:stretch;
+      height:100%;justify-content:center;
     }
     .wound-note-preview{
       display:block;font-size:9px;color:var(--text);text-align:right;white-space:pre-line;
       background:var(--panel-2);border:1px solid var(--border);border-radius:4px;
-      padding:3px 5px;line-height:1.25;cursor:pointer;width:100%;
+      padding:3px 5px;line-height:1.25;cursor:pointer;
       box-shadow:0 2px 6px rgba(0,0,0,.35);
     }
 
@@ -293,14 +334,14 @@
   <table class="enc" id="encTable">
     <thead>
       <tr>
-        <th style="width:20px;"></th>
-        <th style="width:120px;">Name</th>
+        <th style="width:140px;">Name</th>
         <th style="width:70px;">Typ</th>
         <th style="width:120px;">Initiative (2W10)</th>
         <th style="width:130px;">Lebenspunkte</th>
         <th style="width:120px;">Wundgrad</th>
         <th style="width:80px;">VW / RS</th>
         <th style="width:90px;"></th>
+        <th class="cell-preview" style="width:0;"></th>
       </tr>
     </thead>
     <tbody id="encBody"></tbody>
@@ -324,61 +365,103 @@
     <div class="modal-head">
       <h2>Datenbank</h2>
       <div class="spacer"></div>
-      <button class="btn filebtn small">Import
-        <input type="file" id="importFile" accept="application/json">
+      <button class="btn filebtn small">Alles importieren
+        <input type="file" id="importAllFile" accept="application/json">
       </button>
-      <button class="btn small" id="exportBtn">Export</button>
+      <button class="btn small" id="exportAllBtn">Alles exportieren</button>
       <button class="btn small" id="closeDb">Schließen</button>
     </div>
 
-    <div class="modal-section-title">Kämpfer</div>
-    <table class="db">
-      <thead>
-        <tr><th>Name</th><th>Typ</th><th>LP</th><th>Ini-Bonus</th><th>VW</th><th>RS</th><th>KO</th><th></th></tr>
-      </thead>
-      <tbody id="dbBody"></tbody>
-    </table>
-
-    <div class="addrow open" style="margin-top:12px;">
-      <input class="db-name" id="newTplName" placeholder="Name">
-      <select id="newTplType"><option value="spieler">Spieler</option><option value="gegner" selected>Gegner</option></select>
-      <input class="db-num" id="newTplLp" placeholder="LP">
-      <input class="db-num" id="newTplBonus" placeholder="Ini-Bonus">
-      <input class="db-num" id="newTplVw" placeholder="VW">
-      <input class="db-num" id="newTplRs" placeholder="RS">
-      <input class="db-num" id="newTplKo" placeholder="KO">
-      <button class="btn primary small" id="addTpl">+ Anlegen</button>
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="kaempfer">Kämpfer</button>
+      <button class="tab-btn" data-tab="waffen">Waffen</button>
+      <button class="tab-btn" data-tab="fertigkeiten">Fertigkeiten</button>
     </div>
 
-    <div class="modal-section-title" style="display:flex;align-items:center;gap:8px;">
-      <span>Waffen</span>
-      <div class="spacer"></div>
-      <button class="btn filebtn small">Import
-        <input type="file" id="importWpFile" accept="application/json">
-      </button>
-      <button class="btn small" id="exportWpBtn">Export</button>
+    <div class="tab-panel active" data-tabpanel="kaempfer">
+      <div class="modal-section-title" style="display:flex;align-items:center;gap:8px;">
+        <span>Kämpfer</span>
+        <div class="spacer"></div>
+        <button class="btn filebtn small">Import
+          <input type="file" id="importFile" accept="application/json">
+        </button>
+        <button class="btn small" id="exportBtn">Export</button>
+      </div>
+      <table class="db">
+        <thead>
+          <tr><th>Name</th><th>Typ</th><th>LP</th><th>Ini-Bonus</th><th>VW</th><th>RS</th><th>KO</th><th></th></tr>
+        </thead>
+        <tbody id="dbBody"></tbody>
+      </table>
+
+      <div class="addrow open" style="margin-top:12px;">
+        <input class="db-name" id="newTplName" placeholder="Name">
+        <select id="newTplType"><option value="spieler">Spieler</option><option value="gegner" selected>Gegner</option></select>
+        <input class="db-num" id="newTplLp" placeholder="LP">
+        <input class="db-num" id="newTplBonus" placeholder="Ini-Bonus">
+        <input class="db-num" id="newTplVw" placeholder="VW">
+        <input class="db-num" id="newTplRs" placeholder="RS">
+        <input class="db-num" id="newTplKo" placeholder="KO">
+        <select id="newTplWeapon" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px;min-width:140px;">
+          <option value="">— Waffe (optional) —</option>
+        </select>
+        <select id="newTplSkill" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px;min-width:140px;">
+          <option value="">— Fertigkeit (optional) —</option>
+        </select>
+        <button class="btn primary small" id="addTpl">+ Anlegen</button>
+      </div>
+
+      <div class="settings-line">
+        <label style="flex-basis:100%;">Wundgrade: Angeschlagen (0) · Verletzt (-2) · Verwundet (-4) · Schwer verwundet (-6) · Außer Gefecht (handlungsunfähig) · Koma (bewusstlos) · Tod — je 1× Konstitutionswert breit, fest nach Regelwerk.</label>
+      </div>
     </div>
-    <table class="db" id="weaponTable">
-      <thead>
-        <tr><th style="width:160px;">Name</th><th>Beschreibung (Angriffswert, Schaden, ...)</th><th></th></tr>
-      </thead>
-      <tbody id="weaponBody"></tbody>
-    </table>
-    <div class="addrow open" style="margin-top:12px;">
-      <input class="db-name" id="newWpName" placeholder="Waffenname">
-      <input class="db-desc" style="flex:1;min-width:200px;" id="newWpDesc" placeholder="z.B. Angriffswert 12, Schaden 1W6+2">
-      <button class="btn primary small" id="addWp">+ Anlegen</button>
+
+    <div class="tab-panel" data-tabpanel="waffen">
+      <div class="modal-section-title" style="display:flex;align-items:center;gap:8px;">
+        <span>Waffen</span>
+        <div class="spacer"></div>
+        <button class="btn filebtn small">Import
+          <input type="file" id="importWpFile" accept="application/json">
+        </button>
+        <button class="btn small" id="exportWpBtn">Export</button>
+      </div>
+      <table class="db" id="weaponTable">
+        <thead>
+          <tr><th style="width:160px;">Name</th><th>Beschreibung (Wert, ...)</th><th></th></tr>
+        </thead>
+        <tbody id="weaponBody"></tbody>
+      </table>
+      <div class="addrow open" style="margin-top:12px;">
+        <input class="db-name" id="newWpName" placeholder="Waffenname">
+        <input class="db-desc" style="flex:1;min-width:200px;" id="newWpDesc" placeholder="z.B. 12, 1W6+2">
+        <button class="btn primary small" id="addWp">+ Anlegen</button>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-tabpanel="fertigkeiten">
+      <div class="modal-section-title" style="display:flex;align-items:center;gap:8px;">
+        <span>Fertigkeiten</span>
+        <div class="spacer"></div>
+        <button class="btn filebtn small">Import
+          <input type="file" id="importSkFile" accept="application/json">
+        </button>
+        <button class="btn small" id="exportSkBtn">Export</button>
+      </div>
+      <table class="db" id="skillTable">
+        <thead>
+          <tr><th style="width:160px;">Name</th><th>Beschreibung (Wert, Anmerkungen, ...)</th><th></th></tr>
+        </thead>
+        <tbody id="skillBody"></tbody>
+      </table>
+      <div class="addrow open" style="margin-top:12px;">
+        <input class="db-name" id="newSkName" placeholder="Fertigkeitsname">
+        <input class="db-desc" style="flex:1;min-width:200px;" id="newSkDesc" placeholder="z.B. 3">
+        <button class="btn primary small" id="addSk">+ Anlegen</button>
+      </div>
     </div>
 
     <div class="settings-line">
-      <label style="flex-basis:100%;">Wundgrad-Mali (optional, eigene Werte):</label>
-      <span class="stat-lbl">WG1</span><input class="num-input stat-input" id="malus1" placeholder="0">
-      <span class="stat-lbl">WG2</span><input class="num-input stat-input" id="malus2" placeholder="–">
-      <span class="stat-lbl">WG3</span><input class="num-input stat-input" id="malus3" placeholder="–">
-      <span class="stat-lbl">WG4</span><input class="num-input stat-input" id="malus4" placeholder="–">
-      <span class="stat-lbl">WG5</span><input class="num-input stat-input" id="malus5" placeholder="–">
-      <span class="stat-lbl">WG6</span><input class="num-input stat-input" id="malus6" placeholder="–">
-      <label style="margin-left:auto;color:var(--dim);">Alle Änderungen werden lokal im Browser gespeichert.</label>
+      <label style="color:var(--dim);">Alle Änderungen werden lokal im Browser gespeichert.</label>
     </div>
   </div>
 </div>
@@ -403,6 +486,7 @@
   const LS_ENC = "ac_encounter_v1";
   const LS_SET = "ac_settings_v1";
   const LS_WEAPONS = "ac_weapons_v1";
+  const LS_SKILLS = "ac_skills_v1";
 
   const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
   const numOr = (v,f) => { const n = parseInt(v,10); return isNaN(n) ? f : n; };
@@ -415,6 +499,17 @@
   }
 
   // ---------- migration: old schema (ruestung/angriff) -> vw/rs/ko + freetext ----------
+  function stripValueWords(text){
+    if(!text) return text;
+    return text.replace(/Angriffswert:?\s*/gi, "").replace(/Fertigkeitswert:?\s*/gi, "")
+      .replace(/Schaden\s*/gi, "").trim();
+  }
+
+  function stripPlusSign(text){
+    if(!text) return text;
+    return text.replace(/\+(?=\d)/g, "");
+  }
+
   function migrateTemplate(t){
     return {
       id: t.id || uid(),
@@ -426,8 +521,8 @@
       rs: t.rs !== undefined ? numOr(t.rs, 0) : 0,
       ko: numOr(t.ko, 0),
       woundNotes: t.woundNotes || "",
-      weaponText: t.weaponText || (t.angriff !== undefined ? `(migriert) Angriffswert: ${t.angriff}` : ""),
-      skillsText: t.skillsText || ""
+      weaponText: stripValueWords(t.weaponText || (t.angriff !== undefined ? `(migriert) ${t.angriff}` : "")),
+      skillsText: stripPlusSign(stripValueWords(t.skillsText || ""))
     };
   }
   function migrateCombatant(c){
@@ -443,8 +538,8 @@
       rs: c.rs !== undefined ? numOr(c.rs, 0) : 0,
       ko: numOr(c.ko, 0),
       woundNotes: c.woundNotes !== undefined ? c.woundNotes : "",
-      weaponText: c.weaponText || (c.angriff !== undefined ? `(migriert) Angriffswert: ${c.angriff}` : ""),
-      skillsText: c.skillsText || "",
+      weaponText: stripValueWords(c.weaponText || (c.angriff !== undefined ? `(migriert) ${c.angriff}` : "")),
+      skillsText: stripPlusSign(stripValueWords(c.skillsText || "")),
       expanded: !!c.expanded
     };
   }
@@ -453,23 +548,35 @@
     return {
       id: w.id || uid(),
       name: w.name || "Unbenannt",
-      description: w.description || ""
+      description: stripValueWords(w.description || "")
+    };
+  }
+
+  function migrateSkill(s){
+    return {
+      id: s.id || uid(),
+      name: s.name || "Unbenannt",
+      description: stripPlusSign(stripValueWords(s.description || ""))
     };
   }
 
   let db = load(LS_DB, []).map(migrateTemplate);
   let weapons = load(LS_WEAPONS, []).map(migrateWeapon);
+  let skills = load(LS_SKILLS, []).map(migrateSkill);
   let encounter = load(LS_ENC, { round: 1, combatants: [] });
   encounter.combatants = (encounter.combatants || []).map(migrateCombatant);
   if(!encounter.round) encounter.round = 1;
   if(encounter.currentTurnId === undefined) encounter.currentTurnId = null;
-  let settings = load(LS_SET, { maluses: [] });
-  if(!settings.maluses) settings.maluses = [];
+  let settings = load(LS_SET, {});
 
   function saveDb(){ localStorage.setItem(LS_DB, JSON.stringify(db)); }
   function saveWeapons(){ localStorage.setItem(LS_WEAPONS, JSON.stringify(weapons)); }
+  function saveSkills(){ localStorage.setItem(LS_SKILLS, JSON.stringify(skills)); }
   function saveEnc(){ localStorage.setItem(LS_ENC, JSON.stringify(encounter)); }
   function saveSet(){ localStorage.setItem(LS_SET, JSON.stringify(settings)); }
+
+  // Bereinigte/migrierte Daten direkt zurückschreiben, nicht erst bei der nächsten Bearbeitung.
+  saveDb(); saveWeapons(); saveSkills(); saveEnc();
 
   function toast(msg){
     const t = document.getElementById("toast");
@@ -510,58 +617,42 @@
     return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   }
 
-  // ---------- wound levels ----------
-  // Regel: LP sind in 6 Wundgrade unterteilt, jeweils in Hoehe des Konstitutionswertes (KO).
-  const wgColors = [
-    { bg:"#153328", fg:"#6fd9a3" },
-    { bg:"#1f3a1a", fg:"#93d96f" },
-    { bg:"#33350f", fg:"#c7d95f" },
-    { bg:"#3a3113", fg:"#d9c25f" },
-    { bg:"#3a2213", fg:"#e0975f" },
-    { bg:"#3a1712", fg:"#e07a68" }
+  // ---------- wound levels (offizielle Tabelle) ----------
+  // Grade 1-6, je 1x Konstitutionswert (KO) breit; danach Tod.
+  const WOUND_GRADES = [
+    { name: "Angeschlagen",     malus: "0",  bg:"#153328", fg:"#6fd9a3" },
+    { name: "Verletzt",         malus: "-2", bg:"#1f3a1a", fg:"#93d96f" },
+    { name: "Verwundet",        malus: "-4", bg:"#33350f", fg:"#c7d95f" },
+    { name: "Schw. Verw.", malus: "-6", bg:"#3a3113", fg:"#d9c25f" },
+    { name: "Au.Gef",    malus: "Han.unf", bg:"#3a2213", fg:"#e0975f" },
+    { name: "Koma",             malus: "Bewusstl.",     bg:"#3a1712", fg:"#e07a68" }
   ];
+  const WOUND_DEATH = { name: "Tod", malus: "Tod", bg:"#1a0a0a", fg:"#8f4a42" };
 
   function woundGradeNum(cur, max, ko){
     if(max <= 0) return 1;
     const k = (ko && ko > 0) ? ko : Math.max(1, Math.round(max / 6));
     const missing = Math.max(0, max - cur);
-    let grade = Math.floor(missing / k) + 1;
-    if(grade > 6) grade = 6;
-    return grade;
+    return Math.max(1, Math.ceil(missing / k));
   }
 
   function woundInfo(cur, max, ko){
     if(max <= 0) return { label:"—", bg:"#232734", fg:"#8d93a6" };
     const grade = woundGradeNum(cur, max, ko);
-    const col = wgColors[grade - 1];
-    const maluses = settings.maluses || [];
-    const m = maluses[grade - 1];
-    let label = `Wundgrad ${grade}`;
-    if(m !== undefined && m !== null && m !== ""){
-      label += ` (${m > 0 ? "+" : ""}${m})`;
-    }
-    if(cur <= 0){
-      label += " · bewusstlos";
-    }
-    return { label, bg: col.bg, fg: col.fg };
-  }
-
-  function malusTag(grade){
-    const m = (settings.maluses || [])[grade - 1];
-    if(m === undefined || m === null || m === "") return "";
-    return `:${m > 0 ? "+" : ""}${m}`;
+    const tier = grade > 6 ? WOUND_DEATH : WOUND_GRADES[grade - 1];
+    return { label: `${tier.name} (${tier.malus})`, bg: tier.bg, fg: tier.fg };
   }
 
   function generateWoundText(lpMax, ko){
     if(!lpMax || !ko) return "";
     const lines = [];
-    for(let g = 1; g <= 5; g++){
-      const lower = (g-1) * ko;
-      const upper = g * ko - 1;
-      lines.push(`WG${g}${malusTag(g)}: ${lower}–${upper} erlittener Schaden`);
+    for(let g = 1; g <= 6; g++){
+      const lower = (g-1) * ko + (g === 1 ? 0 : 1);
+      const upper = g * ko;
+      const tier = WOUND_GRADES[g-1];
+      lines.push(`${tier.name}: ${lower}–${upper} (${tier.malus})`);
     }
-    const wg6lower = 5 * ko;
-    lines.push(`WG6${malusTag(6)}: ab ${wg6lower} erlittener Schaden (bewusstlos bei 0 LP oder weniger)`);
+    lines.push(`${WOUND_DEATH.name}: ab ${6*ko + 1}`);
     return lines.join("\n");
   }
 
@@ -611,31 +702,30 @@
       tr.draggable = true;
       tr.dataset.id = c.id;
       tr.innerHTML = `
-        <td><span class="drag-handle" title="Ziehen zum Verschieben">⋮⋮</span></td>
-        <td>
+        <td class="cell-name">
+          <span class="drag-handle" title="Ziehen zum Verschieben">⋮⋮</span>
           <input class="name-input" data-field="name" value="${escAttr(c.name)}">
-          ${(!c.expanded) ? buildPreviewWrap(c) : ""}
         </td>
-        <td>
+        <td class="cell-type">
           <span class="type-pill ${c.type}" data-action="toggleType">${c.type === "spieler" ? "Spieler" : "Gegner"}</span>
           ${needsRoll ? `<span class="needs-roll-tag" title="Initiative noch würfeln">🎲 würfeln!</span>` : ""}
         </td>
-        <td>
+        <td class="cell-init">
           <div class="init-cell">
             <button class="iconbtn" data-action="rollInit" title="Initiative würfeln (2W10 + Bonus)">🎲</button>
             <input class="num-input" data-field="initValue" type="number" value="${c.initValue ?? ""}">
             <span class="bonus-tag">+<input class="num-input" style="width:26px;padding:2px;" data-field="initBonus" type="number" value="${c.initBonus ?? 0}"></span>
           </div>
         </td>
-        <td>
+        <td class="cell-lp">
           <div class="lp-cell">
             <button class="stepbtn" data-action="lpMinus">–</button>
             <input class="num-input" data-field="lpCurrent" type="number" value="${c.lpCurrent}">
             <button class="stepbtn" data-action="lpPlus">+</button>
           </div>
         </td>
-        <td><span class="wound-badge" style="background:${wi.bg};color:${wi.fg};">${wi.label}</span></td>
-        <td>
+        <td class="cell-wound"><span class="wound-badge" style="background:${wi.bg};color:${wi.fg};">${wi.label}</span></td>
+        <td class="cell-stats">
           <div class="stat-stack-wrap">
             <div class="stat-stack">
               <span class="stat-lbl">VW</span>
@@ -647,13 +737,14 @@
             </div>
           </div>
         </td>
-        <td>
+        <td class="cell-actions">
           <div class="rowbtns">
             <button class="expand-btn" data-action="toggleExpand" title="Notizen ein-/ausklappen">${c.expanded ? "▾" : "▸"}</button>
             <button class="iconbtn" data-action="dup" title="Duplizieren">⧉</button>
             <button class="iconbtn" data-action="del" title="Entfernen">✕</button>
           </div>
         </td>
+        <td class="cell-preview">${(!c.expanded) ? buildPreviewWrap(c) : ""}</td>
       `;
       encBody.appendChild(tr);
 
@@ -679,7 +770,7 @@
               </div>
               <div class="detail-field">
                 <label>Waffen / Angriff</label>
-                <textarea data-field="weaponText" placeholder="Name, Angriffswert, Schaden...">${escHtml(c.weaponText)}</textarea>
+                <textarea data-field="weaponText" placeholder="Name, Wert...">${escHtml(c.weaponText)}</textarea>
                 <div class="weapon-pick">
                   <select data-role="weaponSelect">
                     <option value="">— aus Waffen-Datenbank —</option>
@@ -691,6 +782,13 @@
               <div class="detail-field">
                 <label>Fertigkeiten</label>
                 <textarea data-field="skillsText" placeholder="Relevante Fertigkeiten...">${escHtml(c.skillsText)}</textarea>
+                <div class="weapon-pick">
+                  <select data-role="skillSelect">
+                    <option value="">— aus Fertigkeiten-Datenbank —</option>
+                    ${skills.map(s => `<option value="${s.id}">${escAttr(s.name)}</option>`).join("")}
+                  </select>
+                  <button class="btn small" data-action="insertSkill">Einfügen</button>
+                </div>
               </div>
             </div>
           </td>
@@ -737,6 +835,12 @@
       const w = weapons.find(x => x.id === sel.value);
       if(w){
         c.weaponText = (c.weaponText ? c.weaponText + "\n" : "") + `${w.name}: ${w.description}`;
+      }
+    } else if(action === "insertSkill"){
+      const sel = row.querySelector('[data-role="skillSelect"]');
+      const s = skills.find(x => x.id === sel.value);
+      if(s){
+        c.skillsText = (c.skillsText ? c.skillsText + "\n" : "") + `${s.name}: ${s.description}`;
       }
     }
     saveEnc();
@@ -950,9 +1054,70 @@
   const dbBody = document.getElementById("dbBody");
   const dbExpandedIds = new Set();
 
-  document.getElementById("openDb").onclick = () => { dbModal.classList.add("open"); renderDbTable(); renderWeaponTable(); };
+  document.getElementById("openDb").onclick = () => { dbModal.classList.add("open"); renderDbTable(); renderWeaponTable(); renderSkillTable(); renderTplCreateSelects(); };
   document.getElementById("closeDb").onclick = () => { dbModal.classList.remove("open"); };
   dbModal.addEventListener("click", (e) => { if(e.target === dbModal) dbModal.classList.remove("open"); });
+
+  dbModal.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.tab;
+      dbModal.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b === btn));
+      dbModal.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("active", p.dataset.tabpanel === target));
+    });
+  });
+
+  document.getElementById("exportAllBtn").onclick = () => {
+    const payload = { type: "arcane-codex-datenbank-komplett", kaempfer: db, waffen: weapons, fertigkeiten: skills };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "arcane-codex-datenbank-komplett.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  document.getElementById("importAllFile").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const data = JSON.parse(reader.result);
+        const cleanedDb = Array.isArray(data.kaempfer) ? data.kaempfer.map(migrateTemplate) : [];
+        const cleanedWp = Array.isArray(data.waffen) ? data.waffen.map(migrateWeapon) : [];
+        const cleanedSk = Array.isArray(data.fertigkeiten) ? data.fertigkeiten.map(migrateSkill) : [];
+        if(!cleanedDb.length && !cleanedWp.length && !cleanedSk.length){
+          throw new Error("Keine gültigen Daten gefunden");
+        }
+        showConfirm(`Gefunden: ${cleanedDb.length} Kämpfer, ${cleanedWp.length} Waffen, ${cleanedSk.length} Fertigkeiten. Zu bestehenden Datenbanken hinzufügen, oder alles komplett ersetzen?`, {
+          okText: "Hinzufügen",
+          cancelText: "Alles ersetzen",
+          okClass: "primary",
+          onOk: () => {
+            db = db.concat(cleanedDb);
+            weapons = weapons.concat(cleanedWp);
+            skills = skills.concat(cleanedSk);
+            saveDb(); saveWeapons(); saveSkills();
+            renderDbTable(); renderWeaponTable(); renderSkillTable(); renderDbSelect(); renderTplCreateSelects();
+            toast("Import erfolgreich");
+          },
+          onCancel: () => {
+            db = cleanedDb;
+            weapons = cleanedWp;
+            skills = cleanedSk;
+            saveDb(); saveWeapons(); saveSkills();
+            renderDbTable(); renderWeaponTable(); renderSkillTable(); renderDbSelect(); renderTplCreateSelects();
+            toast("Datenbanken ersetzt");
+          }
+        });
+      }catch(err){
+        toast("Import fehlgeschlagen: kein gültiges Gesamt-Datenbank-JSON.");
+      }
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  });
 
   function renderDbTable(){
     dbBody.innerHTML = "";
@@ -974,7 +1139,7 @@
         <td data-label="KO"><input class="db-num" data-f="ko" type="number" value="${t.ko||0}"></td>
         <td>
           <div class="rowbtns">
-            <button class="expand-btn" data-action="toggleTplExpand" title="Waffen zuweisen">${isOpen ? "▾" : "▸"}⚔</button>
+            <button class="expand-btn" data-action="toggleTplExpand" title="Waffen &amp; Fertigkeiten zuweisen">${isOpen ? "▾" : "▸"}⚔</button>
             <button class="iconbtn" data-action="dupTpl" title="Duplizieren">⧉</button>
             <button class="iconbtn" data-action="delTpl" title="Löschen">✕</button>
           </div>
@@ -990,13 +1155,24 @@
           <td colspan="8">
             <div class="detail-field">
               <label>Waffen / Angriff dieses Kämpfers (wird beim Hinzufügen zum Kampf direkt übernommen)</label>
-              <textarea data-f="weaponText" placeholder="Name, Angriffswert, Schaden...">${escHtml(t.weaponText)}</textarea>
+              <textarea data-f="weaponText" placeholder="Name, Wert...">${escHtml(t.weaponText)}</textarea>
               <div class="weapon-pick">
                 <select data-role="weaponSelectTpl">
                   <option value="">— aus Waffen-Datenbank —</option>
                   ${weapons.map(w => `<option value="${w.id}">${escAttr(w.name)}</option>`).join("")}
                 </select>
                 <button class="btn small" data-action="insertWeaponTpl">Einfügen</button>
+              </div>
+            </div>
+            <div class="detail-field" style="margin-top:10px;">
+              <label>Fertigkeiten dieses Kämpfers (wird beim Hinzufügen zum Kampf direkt übernommen)</label>
+              <textarea data-f="skillsText" placeholder="Relevante Fertigkeiten...">${escHtml(t.skillsText)}</textarea>
+              <div class="weapon-pick">
+                <select data-role="skillSelectTpl">
+                  <option value="">— aus Fertigkeiten-Datenbank —</option>
+                  ${skills.map(s => `<option value="${s.id}">${escAttr(s.name)}</option>`).join("")}
+                </select>
+                <button class="btn small" data-action="insertSkillTpl">Einfügen</button>
               </div>
             </div>
           </td>
@@ -1012,7 +1188,7 @@
     const tr = e.target.closest("tr");
     const t = db.find(x => x.id === tr.dataset.id);
     if(!t) return;
-    if(f === "name" || f === "type" || f === "weaponText"){
+    if(f === "name" || f === "type" || f === "weaponText" || f === "skillsText"){
       t[f] = e.target.value;
     } else {
       t[f] = parseInt(e.target.value,10) || 0;
@@ -1056,12 +1232,33 @@
         saveDb();
         renderDbTable();
       }
+    } else if(btn.dataset.action === "insertSkillTpl"){
+      const sel = tr.querySelector('[data-role="skillSelectTpl"]');
+      const s = skills.find(x => x.id === sel.value);
+      if(s){
+        t.skillsText = (t.skillsText ? t.skillsText + "\n" : "") + `${s.name}: ${s.description}`;
+        saveDb();
+        renderDbTable();
+      }
     }
   });
+
+  function renderTplCreateSelects(){
+    const wSel = document.getElementById("newTplWeapon");
+    const sSel = document.getElementById("newTplSkill");
+    wSel.innerHTML = '<option value="">— Waffe (optional) —</option>' +
+      weapons.map(w => `<option value="${w.id}">${escAttr(w.name)}</option>`).join("");
+    sSel.innerHTML = '<option value="">— Fertigkeit (optional) —</option>' +
+      skills.map(s => `<option value="${s.id}">${escAttr(s.name)}</option>`).join("");
+  }
 
   document.getElementById("addTpl").onclick = () => {
     const name = document.getElementById("newTplName").value.trim();
     if(!name){ toast("Bitte einen Namen eingeben"); return; }
+    const wId = document.getElementById("newTplWeapon").value;
+    const sId = document.getElementById("newTplSkill").value;
+    const w = weapons.find(x => x.id === wId);
+    const s = skills.find(x => x.id === sId);
     db.push({
       id: uid(),
       name,
@@ -1071,9 +1268,13 @@
       vw: parseInt(document.getElementById("newTplVw").value,10) || 0,
       rs: parseInt(document.getElementById("newTplRs").value,10) || 0,
       ko: parseInt(document.getElementById("newTplKo").value,10) || 0,
-      woundNotes: "", weaponText: "", skillsText: ""
+      woundNotes: "",
+      weaponText: w ? `${w.name}: ${w.description}` : "",
+      skillsText: s ? `${s.name}: ${s.description}` : ""
     });
     ["newTplName","newTplLp","newTplBonus","newTplVw","newTplRs","newTplKo"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("newTplWeapon").value = "";
+    document.getElementById("newTplSkill").value = "";
     saveDb();
     renderDbTable();
     renderDbSelect();
@@ -1117,6 +1318,7 @@
         weapons = weapons.filter(x => x.id !== w.id);
         saveWeapons();
         renderWeaponTable();
+        renderTplCreateSelects();
         renderDbTable();
       }
     });
@@ -1131,6 +1333,7 @@
     document.getElementById("newWpDesc").value = "";
     saveWeapons();
     renderWeaponTable();
+    renderTplCreateSelects();
     renderDbTable();
   };
 
@@ -1161,17 +1364,122 @@
             weapons = weapons.concat(cleaned);
             saveWeapons();
             renderWeaponTable();
+            renderTplCreateSelects();
             toast("Waffen-Import erfolgreich");
           },
           onCancel: () => {
             weapons = cleaned;
             saveWeapons();
             renderWeaponTable();
+            renderTplCreateSelects();
             toast("Waffen-Datenbank ersetzt");
           }
         });
       }catch(err){
         toast("Import fehlgeschlagen: kein gültiges Waffen-JSON.");
+      }
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  // ---------- database modal: skills ----------
+  const skillBody = document.getElementById("skillBody");
+
+  function renderSkillTable(){
+    skillBody.innerHTML = "";
+    skills.forEach(s => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td data-label="Name"><input class="db-name" data-f="name" value="${escAttr(s.name)}"></td>
+        <td data-label="Beschreibung"><textarea class="db-desc" data-f="description">${escHtml(s.description)}</textarea></td>
+        <td><button class="iconbtn" data-action="delSk" title="Löschen">✕</button></td>
+      `;
+      tr.dataset.id = s.id;
+      skillBody.appendChild(tr);
+    });
+  }
+
+  skillBody.addEventListener("input", (e) => {
+    const f = e.target.dataset.f;
+    if(!f) return;
+    const tr = e.target.closest("tr");
+    const s = skills.find(x => x.id === tr.dataset.id);
+    if(!s) return;
+    s[f] = e.target.value;
+    saveSkills();
+  });
+
+  skillBody.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-action='delSk']");
+    if(!btn) return;
+    const tr = e.target.closest("tr");
+    const s = skills.find(x => x.id === tr.dataset.id);
+    if(!s) return;
+    showConfirm(`"${s.name}" wirklich löschen?`, {
+      onOk: () => {
+        skills = skills.filter(x => x.id !== s.id);
+        saveSkills();
+        renderSkillTable();
+        renderTplCreateSelects();
+        renderDbTable();
+      }
+    });
+  });
+
+  document.getElementById("addSk").onclick = () => {
+    const name = document.getElementById("newSkName").value.trim();
+    const description = document.getElementById("newSkDesc").value.trim();
+    if(!name){ toast("Bitte einen Fertigkeitsnamen eingeben"); return; }
+    skills.push({ id: uid(), name, description });
+    document.getElementById("newSkName").value = "";
+    document.getElementById("newSkDesc").value = "";
+    saveSkills();
+    renderSkillTable();
+    renderTplCreateSelects();
+    renderDbTable();
+  };
+
+  document.getElementById("exportSkBtn").onclick = () => {
+    const blob = new Blob([JSON.stringify(skills, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "arcane-codex-fertigkeiten.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  document.getElementById("importSkFile").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const data = JSON.parse(reader.result);
+        if(!Array.isArray(data)) throw new Error("Kein Array");
+        const cleaned = data.map(migrateSkill);
+        showConfirm(`${cleaned.length} Fertigkeiten gefunden. Zur bestehenden Datenbank hinzufügen, oder komplett ersetzen?`, {
+          okText: "Hinzufügen",
+          cancelText: "Ersetzen",
+          okClass: "primary",
+          onOk: () => {
+            skills = skills.concat(cleaned);
+            saveSkills();
+            renderSkillTable();
+            renderTplCreateSelects();
+            toast("Fertigkeiten-Import erfolgreich");
+          },
+          onCancel: () => {
+            skills = cleaned;
+            saveSkills();
+            renderSkillTable();
+            renderTplCreateSelects();
+            toast("Fertigkeiten-Datenbank ersetzt");
+          }
+        });
+      }catch(err){
+        toast("Import fehlgeschlagen: kein gültiges Fertigkeiten-JSON.");
       }
       e.target.value = "";
     };
@@ -1226,19 +1534,24 @@
   });
 
   // ---------- seed example data on first run ----------
-  if(!settings.maluses || settings.maluses.length === 0){
-    // Beispielwerte (keine offizielle Regelquelle) - steigender Malus je Wundgrad, frei anpassbar.
-    settings.maluses = [0, -1, -2, -3, -4, -5];
-    saveSet();
-  }
-
   if(weapons.length === 0){
     weapons = [
-      { id: uid(), name: "Kurzschwert", description: "Angriffswert 12, Schaden 1W6+2" },
-      { id: uid(), name: "Langbogen", description: "Angriffswert 10, Schaden 1W8, Reichweite mittel" },
-      { id: uid(), name: "Ork-Axt", description: "Angriffswert 11, Schaden 1W10+3, zweihändig" }
+      { id: uid(), name: "Kurzschwert", description: "12, 1W6+2" },
+      { id: uid(), name: "Langbogen", description: "10, 1W8, Reichweite mittel" },
+      { id: uid(), name: "Ork-Axt", description: "11, 1W10+3, zweihändig" }
     ];
     saveWeapons();
+  }
+
+  if(skills.length === 0){
+    skills = [
+      { id: uid(), name: "Schleichen", description: "2" },
+      { id: uid(), name: "Wildnisgespür", description: "1" },
+      { id: uid(), name: "Einschüchtern", description: "3" },
+      { id: uid(), name: "Heilkunde", description: "2" },
+      { id: uid(), name: "Klettern", description: "1" }
+    ];
+    saveSkills();
   }
 
   if(db.length === 0){
@@ -1249,34 +1562,23 @@
       {
         id: uid(), name: "Goblin", type: "gegner", lpMax: goblinLp, initBonus: 1, vw: 22, rs: 1, ko: goblinKo,
         woundNotes: generateWoundText(goblinLp, goblinKo),
-        weaponText: "Kurzschwert: Angriffswert 12, Schaden 1W6+2",
-        skillsText: "Schleichen +2, Wildnisgespür +1"
+        weaponText: "Kurzschwert: 12, 1W6+2",
+        skillsText: "Schleichen 2, Wildnisgespür 1"
       },
       {
         id: uid(), name: "Ork-Krieger", type: "gegner", lpMax: orkLp, initBonus: 0, vw: 25, rs: 3, ko: orkKo,
         woundNotes: generateWoundText(orkLp, orkKo),
-        weaponText: "Ork-Axt: Angriffswert 11, Schaden 1W10+3, zweihändig",
-        skillsText: "Einschüchtern +3"
+        weaponText: "Ork-Axt: 11, 1W10+3, zweihändig",
+        skillsText: "Einschüchtern 3"
       },
       {
         id: uid(), name: "Held", type: "spieler", lpMax: heldLp, initBonus: 2, vw: 26, rs: 2, ko: heldKo,
         woundNotes: generateWoundText(heldLp, heldKo),
-        weaponText: "Langbogen: Angriffswert 10, Schaden 1W8, Reichweite mittel",
-        skillsText: "Heilkunde +2, Klettern +1"
+        weaponText: "Langbogen: 10, 1W8, Reichweite mittel",
+        skillsText: "Heilkunde 2, Klettern 1"
       }
     ];
     saveDb();
-  }
-
-  // ---------- malus settings wiring ----------
-  for(let i = 1; i <= 6; i++){
-    const el = document.getElementById("malus" + i);
-    el.value = settings.maluses[i-1] ?? "";
-    el.addEventListener("input", () => {
-      settings.maluses[i-1] = el.value === "" ? "" : (parseInt(el.value,10) || 0);
-      saveSet();
-      renderEncounter();
-    });
   }
 
   renderDbSelect();
