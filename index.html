@@ -757,7 +757,9 @@
             <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <span class="stat-lbl" style="font-size:11px;">Max. LP</span>
               <input class="num-input" style="width:56px;" data-field="lpMax" type="number" value="${c.lpMax}">
-              <span style="color:var(--dim);font-size:11px;">(aktuell: ${c.lpCurrent})</span>
+              <span style="color:var(--dim);font-size:11px;">(aktuell: <span data-role="lpCurrentDisplay">${c.lpCurrent}</span>)</span>
+              <span class="stat-lbl" style="font-size:11px;margin-left:10px;">Erlittener Schaden</span>
+              <span style="color:var(--ember);font-size:12px;font-weight:700;" data-role="damageDisplay">${Math.max(0, c.lpMax - c.lpCurrent)}</span>
               <span class="stat-lbl" style="font-size:11px;margin-left:10px;">KO</span>
               <input class="num-input" style="width:44px;" data-field="ko" type="number" value="${c.ko ?? 0}">
             </div>
@@ -867,6 +869,15 @@
     if(field === "lpCurrent" || field === "lpMax" || field === "ko"){
       const badgeRow = encBody.querySelector(`tr.main-row[data-id="${id}"]`);
       if(badgeRow) refreshRowSoft(badgeRow, c);
+    }
+    if(field === "lpCurrent" || field === "lpMax"){
+      const detailRow = encBody.querySelector(`tr.detail-row[data-id="${id}"]`);
+      if(detailRow){
+        const curEl = detailRow.querySelector('[data-role="lpCurrentDisplay"]');
+        const dmgEl = detailRow.querySelector('[data-role="damageDisplay"]');
+        if(curEl) curEl.textContent = c.lpCurrent;
+        if(dmgEl) dmgEl.textContent = Math.max(0, c.lpMax - c.lpCurrent);
+      }
     }
   });
 
