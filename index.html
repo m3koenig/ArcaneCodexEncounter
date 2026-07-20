@@ -82,7 +82,9 @@
     background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
     padding:10px 12px;margin-top:8px;
   }
-  .addrow.open{display:flex;}
+  .addrow.open{display:flex;flex-direction:column;align-items:stretch;}
+  .addmode-panel{display:none;gap:10px;align-items:center;flex-wrap:wrap;}
+  .addmode-panel.active{display:flex;}
   .addrow select{
     background:var(--panel-2);color:var(--text);border:1px solid var(--border);
     border-radius:4px;padding:6px 8px;min-width:200px;
@@ -333,18 +335,25 @@
   <div class="addToggleWrap">
     <button class="btn primary" id="addToggle">+ Kämpfer hinzufügen</button>
     <div class="addrow" id="addRow">
-      <select id="dbSelect"><option value="">— aus Datenbank wählen —</option></select>
-      <button class="btn" id="addFromDb">+ Hinzufügen</button>
-      <span class="addrow-sep"></span>
-      <input class="name-input" style="width:120px;border:1px solid var(--border);background:var(--panel-2);" id="quickName" placeholder="Name (schnell)">
-      <select id="quickType" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px;">
-        <option value="spieler">Spieler</option>
-        <option value="gegner" selected>Gegner</option>
-      </select>
-      <input class="num-input" id="quickLp" placeholder="LP" style="width:44px;">
-      <input class="num-input" id="quickBonus" placeholder="Ini" style="width:38px;">
-      <input class="num-input" id="quickKo" placeholder="KO" style="width:38px;">
-      <button class="btn" id="quickAdd">+ Zum Kampf</button>
+      <div class="tab-bar" style="margin-bottom:10px;">
+        <button class="tab-btn active" data-addmode="select">Auswählen</button>
+        <button class="tab-btn" data-addmode="manual">Eingabe</button>
+      </div>
+      <div class="addmode-panel active" data-addpanel="select">
+        <select id="dbSelect"><option value="">— aus Datenbank wählen —</option></select>
+        <button class="btn" id="addFromDb">+ Hinzufügen</button>
+      </div>
+      <div class="addmode-panel" data-addpanel="manual">
+        <input class="name-input" style="width:120px;border:1px solid var(--border);background:var(--panel-2);" id="quickName" placeholder="Name">
+        <select id="quickType" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px;">
+          <option value="spieler">Spieler</option>
+          <option value="gegner" selected>Gegner</option>
+        </select>
+        <input class="num-input" id="quickLp" placeholder="LP" style="width:44px;">
+        <input class="num-input" id="quickBonus" placeholder="Ini" style="width:38px;">
+        <input class="num-input" id="quickKo" placeholder="KO" style="width:38px;">
+        <button class="btn" id="quickAdd">+ Zum Kampf</button>
+      </div>
     </div>
   </div>
 
@@ -423,6 +432,27 @@
         </div>
         <input type="file" id="importFile" accept="application/json" style="display:none;">
       </div>
+
+      <div class="addToggleWrap">
+        <button class="btn primary small" id="tplAddToggle">+ Kämpfer anlegen</button>
+        <div class="addrow" id="tplAddRow">
+          <input class="db-name" id="newTplName" placeholder="Name">
+          <select id="newTplType"><option value="spieler">Spieler</option><option value="gegner" selected>Gegner</option></select>
+          <input class="db-num" id="newTplLp" placeholder="LP">
+          <input class="db-num" id="newTplBonus" placeholder="Ini-Bonus">
+          <input class="db-num" id="newTplVw" placeholder="VW">
+          <input class="db-num" id="newTplRs" placeholder="RS">
+          <input class="db-num" id="newTplKo" placeholder="KO">
+          <select id="newTplWeapon" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px;min-width:140px;">
+            <option value="">— Waffe (optional) —</option>
+          </select>
+          <select id="newTplSkill" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px;min-width:140px;">
+            <option value="">— Fertigkeit (optional) —</option>
+          </select>
+          <button class="btn primary small" id="addTpl">+ Anlegen</button>
+        </div>
+      </div>
+
       <table class="db" id="dbTable">
         <thead>
           <tr><th>Name</th><th>Typ</th><th>LP</th><th>Ini-Bonus</th><th>VW</th><th>RS</th><th>KO</th><th></th></tr>
@@ -430,23 +460,6 @@
         <tbody id="dbBody"></tbody>
       </table>
       <div class="db-list" id="dbListView" style="display:none;"></div>
-
-      <div class="addrow open" style="margin-top:12px;">
-        <input class="db-name" id="newTplName" placeholder="Name">
-        <select id="newTplType"><option value="spieler">Spieler</option><option value="gegner" selected>Gegner</option></select>
-        <input class="db-num" id="newTplLp" placeholder="LP">
-        <input class="db-num" id="newTplBonus" placeholder="Ini-Bonus">
-        <input class="db-num" id="newTplVw" placeholder="VW">
-        <input class="db-num" id="newTplRs" placeholder="RS">
-        <input class="db-num" id="newTplKo" placeholder="KO">
-        <select id="newTplWeapon" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px;min-width:140px;">
-          <option value="">— Waffe (optional) —</option>
-        </select>
-        <select id="newTplSkill" style="background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px;min-width:140px;">
-          <option value="">— Fertigkeit (optional) —</option>
-        </select>
-        <button class="btn primary small" id="addTpl">+ Anlegen</button>
-      </div>
 
       <div class="settings-line">
         <label style="flex-basis:100%;">Wundgrade: Angeschlagen (0) · Verletzt (-2) · Verwundet (-4) · Schwer verwundet (-6) · Außer Gefecht (handlungsunfähig) · Koma (bewusstlos) · Tod — je 1× Konstitutionswert breit, fest nach Regelwerk.</label>
@@ -473,6 +486,14 @@
         </div>
         <input type="file" id="importWpFile" accept="application/json" style="display:none;">
       </div>
+      <div class="addToggleWrap">
+        <button class="btn primary small" id="wpAddToggle">+ Waffe anlegen</button>
+        <div class="addrow" id="wpAddRow">
+          <input class="db-name" id="newWpName" placeholder="Waffenname">
+          <input class="db-desc" style="flex:1;min-width:200px;" id="newWpDesc" placeholder="z.B. 12, 1W6+2">
+          <button class="btn primary small" id="addWp">+ Anlegen</button>
+        </div>
+      </div>
       <table class="db" id="weaponTable">
         <thead>
           <tr><th style="width:160px;">Name</th><th>Beschreibung (Wert, ...)</th><th></th></tr>
@@ -480,11 +501,6 @@
         <tbody id="weaponBody"></tbody>
       </table>
       <div class="db-list" id="weaponListView" style="display:none;"></div>
-      <div class="addrow open" style="margin-top:12px;">
-        <input class="db-name" id="newWpName" placeholder="Waffenname">
-        <input class="db-desc" style="flex:1;min-width:200px;" id="newWpDesc" placeholder="z.B. 12, 1W6+2">
-        <button class="btn primary small" id="addWp">+ Anlegen</button>
-      </div>
     </div>
 
     <div class="tab-panel" data-tabpanel="fertigkeiten" id="fertigkeitenPanel">
@@ -507,6 +523,14 @@
         </div>
         <input type="file" id="importSkFile" accept="application/json" style="display:none;">
       </div>
+      <div class="addToggleWrap">
+        <button class="btn primary small" id="skAddToggle">+ Fertigkeit anlegen</button>
+        <div class="addrow" id="skAddRow">
+          <input class="db-name" id="newSkName" placeholder="Fertigkeitsname">
+          <input class="db-desc" style="flex:1;min-width:200px;" id="newSkDesc" placeholder="z.B. 3">
+          <button class="btn primary small" id="addSk">+ Anlegen</button>
+        </div>
+      </div>
       <table class="db" id="skillTable">
         <thead>
           <tr><th style="width:160px;">Name</th><th>Beschreibung (Wert, Anmerkungen, ...)</th><th></th></tr>
@@ -514,11 +538,6 @@
         <tbody id="skillBody"></tbody>
       </table>
       <div class="db-list" id="skillListView" style="display:none;"></div>
-      <div class="addrow open" style="margin-top:12px;">
-        <input class="db-name" id="newSkName" placeholder="Fertigkeitsname">
-        <input class="db-desc" style="flex:1;min-width:200px;" id="newSkDesc" placeholder="z.B. 3">
-        <button class="btn primary small" id="addSk">+ Anlegen</button>
-      </div>
     </div>
 
     <div class="settings-line">
@@ -809,6 +828,7 @@
         <td class="cell-actions">
           <div class="rowbtns">
             <button class="expand-btn" data-action="toggleExpand" title="Notizen ein-/ausklappen">${c.expanded ? "▾" : "▸"}</button>
+            <button class="iconbtn" data-action="saveToDb" title="In Datenbank übernehmen">💾</button>
             <button class="iconbtn" data-action="dup" title="Duplizieren">⧉</button>
             <button class="iconbtn" data-action="del" title="Entfernen">✕</button>
           </div>
@@ -908,6 +928,7 @@
               <div class="rowbtns">
                 <button class="btn small" data-action="collapseEncListItem">▾ fertig</button>
                 <button class="expand-btn" data-action="toggleExpand" title="Notizen ein-/ausklappen">${c.expanded ? "▾" : "▸"} Notizen</button>
+                <button class="iconbtn" data-action="saveToDb" title="In Datenbank übernehmen">💾</button>
                 <button class="iconbtn" data-action="dup" title="Duplizieren">⧉</button>
                 <button class="iconbtn" data-action="del" title="Entfernen">✕</button>
               </div>
@@ -956,6 +977,25 @@
       copy.expanded = false;
       const idx = encounter.combatants.indexOf(c);
       encounter.combatants.splice(idx + 1, 0, copy);
+    } else if(action === "saveToDb"){
+      db.push({
+        id: uid(),
+        name: c.name,
+        type: c.type,
+        lpMax: c.lpMax,
+        initBonus: c.initBonus,
+        vw: c.vw,
+        rs: c.rs,
+        ko: c.ko,
+        woundNotes: c.woundNotes,
+        weaponText: c.weaponText,
+        skillsText: c.skillsText
+      });
+      saveDb();
+      renderDbTable();
+      renderDbSelect();
+      renderTplCreateSelects();
+      toast(`${c.name} in Datenbank übernommen`);
     } else if(action === "del"){
       encounter.combatants = encounter.combatants.filter(x => x.id !== id);
       if(encListExpandedId === id) encListExpandedId = null;
@@ -1160,6 +1200,26 @@
     addRow.classList.toggle("open");
     addToggle.textContent = addRow.classList.contains("open") ? "– Hinzufügen ausblenden" : "+ Kämpfer hinzufügen";
   };
+
+  addRow.querySelectorAll("[data-addmode]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.addmode;
+      addRow.querySelectorAll("[data-addmode]").forEach(b => b.classList.toggle("active", b === btn));
+      addRow.querySelectorAll("[data-addpanel]").forEach(p => p.classList.toggle("active", p.dataset.addpanel === mode));
+    });
+  });
+
+  function setupAddToggle(toggleBtnId, rowId, openLabel, closeLabel){
+    const toggleBtn = document.getElementById(toggleBtnId);
+    const row = document.getElementById(rowId);
+    toggleBtn.onclick = () => {
+      row.classList.toggle("open");
+      toggleBtn.textContent = row.classList.contains("open") ? closeLabel : openLabel;
+    };
+  }
+  setupAddToggle("tplAddToggle", "tplAddRow", "+ Kämpfer anlegen", "– Anlegen ausblenden");
+  setupAddToggle("wpAddToggle", "wpAddRow", "+ Waffe anlegen", "– Anlegen ausblenden");
+  setupAddToggle("skAddToggle", "skAddRow", "+ Fertigkeit anlegen", "– Anlegen ausblenden");
 
   // ---------- add from db / quick add ----------
   const dbSelect = document.getElementById("dbSelect");
