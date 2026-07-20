@@ -70,6 +70,8 @@
   .dropdown-item:hover{background:var(--panel-2);}
   .dropdown-item.danger{color:#e6a396;}
   .dropdown-item.danger:hover{background:#301612;}
+  .dropdown-item.active-view{color:var(--gold);}
+  .dropdown-item.active-view::before{content:"✓ ";}
 
   /* ---------- layout ---------- */
   main{padding:14px 16px 110px;max-width:1180px;margin:0 auto;}
@@ -309,7 +311,13 @@
 <div class="topbar">
   <h1>Codex Initiative<small>Arcane Codex &middot; Encounter Helper</small></h1>
   <button class="btn" id="sortBtn">⇅ Initiative sortieren</button>
-  <button class="btn" id="encViewToggle">☰ Liste</button>
+  <div class="menu-wrap">
+    <button class="btn" id="encViewMenuBtn">Ansicht ▾</button>
+    <div class="dropdown-menu" id="encViewMenu">
+      <button class="dropdown-item" data-view="table">⊞ Tabelle</button>
+      <button class="dropdown-item" data-view="list">☰ Liste</button>
+    </div>
+  </div>
   <div class="spacer"></div>
   <div class="menu-wrap">
     <button class="iconbtn" id="burgerBtn" title="Menü" style="width:32px;height:32px;font-size:17px;">☰</button>
@@ -377,10 +385,14 @@
     <div class="modal-head">
       <h2>Datenbank</h2>
       <div class="spacer"></div>
-      <button class="btn filebtn small">Alles importieren
-        <input type="file" id="importAllFile" accept="application/json">
-      </button>
-      <button class="btn small" id="exportAllBtn">Alles exportieren</button>
+      <div class="menu-wrap">
+        <button class="btn small" id="allIoMenuBtn">Import/Export (Alles) ▾</button>
+        <div class="dropdown-menu" id="allIoMenu">
+          <button class="dropdown-item" id="allImportItem">Alles importieren</button>
+          <button class="dropdown-item" id="exportAllBtn">Alles exportieren</button>
+        </div>
+      </div>
+      <input type="file" id="importAllFile" accept="application/json" style="display:none;">
       <button class="btn danger small" id="resetDbBtn">Zurücksetzen</button>
       <button class="btn small" id="closeDb">Schließen</button>
     </div>
@@ -395,11 +407,21 @@
       <div class="modal-section-title" style="display:flex;align-items:center;gap:8px;">
         <span>Kämpfer</span>
         <div class="spacer"></div>
-        <button class="btn small" id="dbViewToggle">☰ Liste</button>
-        <button class="btn filebtn small">Import
-          <input type="file" id="importFile" accept="application/json">
-        </button>
-        <button class="btn small" id="exportBtn">Export</button>
+        <div class="menu-wrap">
+          <button class="btn small" id="dbViewMenuBtn">Ansicht ▾</button>
+          <div class="dropdown-menu" id="dbViewMenu">
+            <button class="dropdown-item" data-view="table">⊞ Tabelle</button>
+            <button class="dropdown-item" data-view="list">☰ Liste</button>
+          </div>
+        </div>
+        <div class="menu-wrap">
+          <button class="btn small" id="dbIoMenuBtn">Import/Export ▾</button>
+          <div class="dropdown-menu" id="dbIoMenu">
+            <button class="dropdown-item" id="dbImportItem">Import</button>
+            <button class="dropdown-item" id="exportBtn">Export</button>
+          </div>
+        </div>
+        <input type="file" id="importFile" accept="application/json" style="display:none;">
       </div>
       <table class="db" id="dbTable">
         <thead>
@@ -435,11 +457,21 @@
       <div class="modal-section-title" style="display:flex;align-items:center;gap:8px;">
         <span>Waffen</span>
         <div class="spacer"></div>
-        <button class="btn small" id="wpViewToggle">☰ Liste</button>
-        <button class="btn filebtn small">Import
-          <input type="file" id="importWpFile" accept="application/json">
-        </button>
-        <button class="btn small" id="exportWpBtn">Export</button>
+        <div class="menu-wrap">
+          <button class="btn small" id="wpViewMenuBtn">Ansicht ▾</button>
+          <div class="dropdown-menu" id="wpViewMenu">
+            <button class="dropdown-item" data-view="table">⊞ Tabelle</button>
+            <button class="dropdown-item" data-view="list">☰ Liste</button>
+          </div>
+        </div>
+        <div class="menu-wrap">
+          <button class="btn small" id="wpIoMenuBtn">Import/Export ▾</button>
+          <div class="dropdown-menu" id="wpIoMenu">
+            <button class="dropdown-item" id="wpImportItem">Import</button>
+            <button class="dropdown-item" id="exportWpBtn">Export</button>
+          </div>
+        </div>
+        <input type="file" id="importWpFile" accept="application/json" style="display:none;">
       </div>
       <table class="db" id="weaponTable">
         <thead>
@@ -459,11 +491,21 @@
       <div class="modal-section-title" style="display:flex;align-items:center;gap:8px;">
         <span>Fertigkeiten</span>
         <div class="spacer"></div>
-        <button class="btn small" id="skViewToggle">☰ Liste</button>
-        <button class="btn filebtn small">Import
-          <input type="file" id="importSkFile" accept="application/json">
-        </button>
-        <button class="btn small" id="exportSkBtn">Export</button>
+        <div class="menu-wrap">
+          <button class="btn small" id="skViewMenuBtn">Ansicht ▾</button>
+          <div class="dropdown-menu" id="skViewMenu">
+            <button class="dropdown-item" data-view="table">⊞ Tabelle</button>
+            <button class="dropdown-item" data-view="list">☰ Liste</button>
+          </div>
+        </div>
+        <div class="menu-wrap">
+          <button class="btn small" id="skIoMenuBtn">Import/Export ▾</button>
+          <div class="dropdown-menu" id="skIoMenu">
+            <button class="dropdown-item" id="skImportItem">Import</button>
+            <button class="dropdown-item" id="exportSkBtn">Export</button>
+          </div>
+        </div>
+        <input type="file" id="importSkFile" accept="application/json" style="display:none;">
       </div>
       <table class="db" id="skillTable">
         <thead>
@@ -1035,12 +1077,31 @@
   // ---------- round counter / sort / clear ----------
   document.getElementById("newRound").onclick = () => { encounter.round++; saveEnc(); renderEncounter(); };
   document.getElementById("roundMinus").onclick = () => { encounter.round = Math.max(1, encounter.round - 1); saveEnc(); renderEncounter(); };
+  function setupViewMenu(menuBtnId, menuId, tableElId, listElId, getMode, setMode, rerenderFn){
+    const btn = document.getElementById(menuBtnId);
+    const menu = document.getElementById(menuId);
+    setupMenu(btn, menu);
+    function applyMode(){
+      const mode = getMode();
+      document.getElementById(tableElId).style.display = mode === "table" ? "table" : "none";
+      document.getElementById(listElId).style.display = mode === "list" ? "block" : "none";
+      menu.querySelectorAll("[data-view]").forEach(item => {
+        item.classList.toggle("active-view", item.dataset.view === mode);
+      });
+    }
+    menu.querySelectorAll("[data-view]").forEach(item => {
+      item.addEventListener("click", () => {
+        setMode(item.dataset.view);
+        applyMode();
+        if(rerenderFn) rerenderFn();
+      });
+    });
+    applyMode();
+  }
+
   let encViewMode = "table";
-  document.getElementById("encViewToggle").onclick = () => {
-    encViewMode = encViewMode === "table" ? "list" : "table";
-    document.getElementById("encViewToggle").textContent = encViewMode === "table" ? "☰ Liste" : "⊞ Tabelle";
-    renderEncounter();
-  };
+  setupViewMenu("encViewMenuBtn", "encViewMenu", "encTable", "encListView",
+    () => encViewMode, (v) => { encViewMode = v; }, renderEncounter);
 
   document.getElementById("sortBtn").onclick = () => {
     encounter.combatants.sort((a,b) => (b.initValue||0) - (a.initValue||0));
@@ -1061,18 +1122,22 @@
     saveEnc();
     renderEncounter();
   };
-  const burgerBtn = document.getElementById("burgerBtn");
-  const burgerMenu = document.getElementById("burgerMenu");
-  burgerBtn.onclick = (e) => {
-    e.stopPropagation();
-    burgerMenu.classList.toggle("open");
-  };
-  burgerMenu.addEventListener("click", (e) => {
-    if(e.target.closest(".dropdown-item")) burgerMenu.classList.remove("open");
-  });
+  function setupMenu(toggleBtn, menuEl){
+    toggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const wasOpen = menuEl.classList.contains("open");
+      document.querySelectorAll(".dropdown-menu.open").forEach(m => m.classList.remove("open"));
+      if(!wasOpen) menuEl.classList.add("open");
+    });
+    menuEl.addEventListener("click", (e) => {
+      if(e.target.closest(".dropdown-item")) menuEl.classList.remove("open");
+    });
+  }
   document.addEventListener("click", (e) => {
-    if(!e.target.closest(".menu-wrap")) burgerMenu.classList.remove("open");
+    if(!e.target.closest(".menu-wrap")) document.querySelectorAll(".dropdown-menu.open").forEach(m => m.classList.remove("open"));
   });
+
+  setupMenu(document.getElementById("burgerBtn"), document.getElementById("burgerMenu"));
 
   document.getElementById("clearEnc").onclick = () => {
     if(encounter.combatants.length === 0) return;
@@ -1182,55 +1247,28 @@
   });
 
   let dbViewMode = "table";
-  document.getElementById("dbViewToggle").onclick = () => {
-    dbViewMode = dbViewMode === "table" ? "list" : "table";
-    const table = document.getElementById("dbTable");
-    const list = document.getElementById("dbListView");
-    const toggleBtn = document.getElementById("dbViewToggle");
-    if(dbViewMode === "table"){
-      table.style.display = "table";
-      list.style.display = "none";
-      toggleBtn.textContent = "☰ Liste";
-    } else {
-      table.style.display = "none";
-      list.style.display = "block";
-      toggleBtn.textContent = "⊞ Tabelle";
-    }
-  };
+  setupViewMenu("dbViewMenuBtn", "dbViewMenu", "dbTable", "dbListView",
+    () => dbViewMode, (v) => { dbViewMode = v; });
 
   let wpViewMode = "table";
-  document.getElementById("wpViewToggle").onclick = () => {
-    wpViewMode = wpViewMode === "table" ? "list" : "table";
-    const table = document.getElementById("weaponTable");
-    const list = document.getElementById("weaponListView");
-    const toggleBtn = document.getElementById("wpViewToggle");
-    if(wpViewMode === "table"){
-      table.style.display = "table";
-      list.style.display = "none";
-      toggleBtn.textContent = "☰ Liste";
-    } else {
-      table.style.display = "none";
-      list.style.display = "block";
-      toggleBtn.textContent = "⊞ Tabelle";
-    }
-  };
+  setupViewMenu("wpViewMenuBtn", "wpViewMenu", "weaponTable", "weaponListView",
+    () => wpViewMode, (v) => { wpViewMode = v; });
 
   let skViewMode = "table";
-  document.getElementById("skViewToggle").onclick = () => {
-    skViewMode = skViewMode === "table" ? "list" : "table";
-    const table = document.getElementById("skillTable");
-    const list = document.getElementById("skillListView");
-    const toggleBtn = document.getElementById("skViewToggle");
-    if(skViewMode === "table"){
-      table.style.display = "table";
-      list.style.display = "none";
-      toggleBtn.textContent = "☰ Liste";
-    } else {
-      table.style.display = "none";
-      list.style.display = "block";
-      toggleBtn.textContent = "⊞ Tabelle";
-    }
-  };
+  setupViewMenu("skViewMenuBtn", "skViewMenu", "skillTable", "skillListView",
+    () => skViewMode, (v) => { skViewMode = v; });
+
+  setupMenu(document.getElementById("dbIoMenuBtn"), document.getElementById("dbIoMenu"));
+  document.getElementById("dbImportItem").onclick = () => document.getElementById("importFile").click();
+
+  setupMenu(document.getElementById("wpIoMenuBtn"), document.getElementById("wpIoMenu"));
+  document.getElementById("wpImportItem").onclick = () => document.getElementById("importWpFile").click();
+
+  setupMenu(document.getElementById("skIoMenuBtn"), document.getElementById("skIoMenu"));
+  document.getElementById("skImportItem").onclick = () => document.getElementById("importSkFile").click();
+
+  setupMenu(document.getElementById("allIoMenuBtn"), document.getElementById("allIoMenu"));
+  document.getElementById("allImportItem").onclick = () => document.getElementById("importAllFile").click();
 
   document.getElementById("resetDbBtn").onclick = () => {
     showConfirm("Datenbank (Kämpfer, Waffen, Fertigkeiten) wirklich auf die Startwerte zurücksetzen? Eigene Einträge gehen dabei verloren.", {
