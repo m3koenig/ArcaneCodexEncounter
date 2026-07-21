@@ -63,6 +63,7 @@
     min-width:160px;padding:6px;box-shadow:0 8px 20px rgba(0,0,0,.4);
   }
   .dropdown-menu.open{display:block;}
+  #phaseMenu{top:auto;bottom:calc(100% + 6px);}
   .dropdown-item{
     display:block;width:100%;text-align:left;background:transparent;border:none;
     color:var(--text);padding:9px 10px;border-radius:5px;font-size:13px;font-weight:600;
@@ -72,6 +73,8 @@
   .dropdown-item.danger:hover{background:#301612;}
   .dropdown-item.active-view{color:var(--gold);}
   .dropdown-item.active-view::before{content:"✓ ";}
+  #phaseMainBtn{border-top-right-radius:0;border-bottom-right-radius:0;}
+  #phaseCaretBtn{border-top-left-radius:0;border-bottom-left-radius:0;}
 
   /* ---------- layout ---------- */
   main{padding:14px 16px 110px;max-width:1180px;margin:0 auto;}
@@ -107,6 +110,7 @@
   .drag-handle:active{cursor:grabbing;}
   .cell-name{display:flex;align-items:center;gap:2px;}
   .cell-preview{display:none;}
+  .lucide-icon{display:inline-block;vertical-align:-2px;flex-shrink:0;}
   .name-input{
     background:transparent;border:1px solid transparent;color:var(--text);
     font-size:14px;font-weight:600;padding:4px 6px;border-radius:4px;width:140px;
@@ -312,17 +316,16 @@
 
 <div class="topbar">
   <h1>Codex Initiative<small>Arcane Codex &middot; Encounter Helper</small></h1>
-  <button class="btn" id="sortBtn">⇅ Initiative sortieren</button>
   <div class="menu-wrap">
-    <button class="btn" id="encViewMenuBtn">Ansicht ▾</button>
+    <button class="btn" id="encViewMenuBtn">Ansicht <span data-icon="chevron-down"></span></button>
     <div class="dropdown-menu" id="encViewMenu">
-      <button class="dropdown-item" data-view="table">⊞ Tabelle</button>
-      <button class="dropdown-item" data-view="list">☰ Liste</button>
+      <button class="dropdown-item" data-view="table"><span data-icon="table"></span> Tabelle</button>
+      <button class="dropdown-item" data-view="list"><span data-icon="list"></span> Liste</button>
     </div>
   </div>
   <div class="spacer"></div>
   <div class="menu-wrap">
-    <button class="iconbtn" id="burgerBtn" title="Menü" style="width:32px;height:32px;font-size:17px;">☰</button>
+    <button class="iconbtn" id="burgerBtn" title="Menü" style="width:32px;height:32px;font-size:17px;"><span data-icon="menu"></span></button>
     <div class="dropdown-menu" id="burgerMenu">
       <button class="dropdown-item" id="openDb">Datenbank</button>
       <button class="dropdown-item danger" id="clearEnc">Kampf leeren</button>
@@ -333,7 +336,7 @@
 <main>
 
   <div class="addToggleWrap">
-    <button class="btn primary" id="addToggle">+ Kämpfer hinzufügen</button>
+    <button class="btn primary" id="addToggle">+ Figur hinzufügen</button>
     <div class="addrow" id="addRow">
       <div class="tab-bar" style="margin-bottom:10px;">
         <button class="tab-btn active" data-addmode="select">Auswählen</button>
@@ -375,7 +378,7 @@
   </table>
   <div class="db-list" id="encListView" style="display:none;"></div>
   </div>
-  <div class="empty-state" id="emptyState">Noch keine Kämpfer im Encounter. Oben auf "+ Kämpfer hinzufügen" tippen.</div>
+  <div class="empty-state" id="emptyState">Noch keine Figuren im Encounter. Oben auf "+ Figur hinzufügen" tippen.</div>
 
 </main>
 
@@ -383,8 +386,17 @@
   <span class="lbl">Runde</span>
   <button class="iconbtn" id="roundMinus">–</button>
   <span class="num" id="roundNum">1</span>
-  <button class="btn primary" id="newRound">+ Neue Runde</button>
-  <button class="btn primary" id="nextTurnBtn">▶ Nächster Kämpfer</button>
+  <button class="iconbtn" id="roundPlus">+</button>
+  <div class="menu-wrap" style="display:flex;">
+    <button class="btn primary" id="phaseMainBtn">Initiative!</button>
+    <button class="btn primary" id="phaseCaretBtn" style="padding:9px 10px;border-left:1px solid #00000030;"><span data-icon="chevron-down"></span></button>
+    <div class="dropdown-menu" id="phaseMenu" style="right:0;left:auto;">
+      <button class="dropdown-item" data-phase="initiative">Initiative!</button>
+      <button class="dropdown-item" data-phase="sort">Sortieren!</button>
+      <button class="dropdown-item" data-phase="turn">Nächste Figur</button>
+      <button class="dropdown-item" data-phase="round">Neue Runde</button>
+    </div>
+  </div>
   <span id="currentTurnLabel" style="color:var(--dim);font-size:12px;"></span>
 </div>
 
@@ -395,7 +407,7 @@
       <h2>Datenbank</h2>
       <div class="spacer"></div>
       <div class="menu-wrap">
-        <button class="btn small" id="allIoMenuBtn">Import/Export (Alles) ▾</button>
+        <button class="btn small" id="allIoMenuBtn">Import/Export (Alles) <span data-icon="chevron-down"></span></button>
         <div class="dropdown-menu" id="allIoMenu">
           <button class="dropdown-item" id="allImportItem">Alles importieren</button>
           <button class="dropdown-item" id="exportAllBtn">Alles exportieren</button>
@@ -407,24 +419,24 @@
     </div>
 
     <div class="tab-bar">
-      <button class="tab-btn active" data-tab="kaempfer">Kämpfer</button>
+      <button class="tab-btn active" data-tab="kaempfer">Figuren</button>
       <button class="tab-btn" data-tab="waffen">Waffen</button>
       <button class="tab-btn" data-tab="fertigkeiten">Fertigkeiten</button>
     </div>
 
     <div class="tab-panel active" data-tabpanel="kaempfer" id="kaempferPanel">
       <div class="modal-section-title" style="display:flex;align-items:center;gap:8px;">
-        <span>Kämpfer</span>
+        <span>Figuren</span>
         <div class="spacer"></div>
         <div class="menu-wrap">
-          <button class="btn small" id="dbViewMenuBtn">Ansicht ▾</button>
+          <button class="btn small" id="dbViewMenuBtn">Ansicht <span data-icon="chevron-down"></span></button>
           <div class="dropdown-menu" id="dbViewMenu">
-            <button class="dropdown-item" data-view="table">⊞ Tabelle</button>
-            <button class="dropdown-item" data-view="list">☰ Liste</button>
+            <button class="dropdown-item" data-view="table"><span data-icon="table"></span> Tabelle</button>
+            <button class="dropdown-item" data-view="list"><span data-icon="list"></span> Liste</button>
           </div>
         </div>
         <div class="menu-wrap">
-          <button class="btn small" id="dbIoMenuBtn">Import/Export ▾</button>
+          <button class="btn small" id="dbIoMenuBtn">Import/Export <span data-icon="chevron-down"></span></button>
           <div class="dropdown-menu" id="dbIoMenu">
             <button class="dropdown-item" id="dbImportItem">Import</button>
             <button class="dropdown-item" id="exportBtn">Export</button>
@@ -434,7 +446,7 @@
       </div>
 
       <div class="addToggleWrap">
-        <button class="btn primary small" id="tplAddToggle">+ Kämpfer anlegen</button>
+        <button class="btn primary small" id="tplAddToggle">+ Figur anlegen</button>
         <div class="addrow" id="tplAddRow">
           <input class="db-name" id="newTplName" placeholder="Name">
           <select id="newTplType"><option value="spieler">Spieler</option><option value="gegner" selected>Gegner</option></select>
@@ -471,14 +483,14 @@
         <span>Waffen</span>
         <div class="spacer"></div>
         <div class="menu-wrap">
-          <button class="btn small" id="wpViewMenuBtn">Ansicht ▾</button>
+          <button class="btn small" id="wpViewMenuBtn">Ansicht <span data-icon="chevron-down"></span></button>
           <div class="dropdown-menu" id="wpViewMenu">
-            <button class="dropdown-item" data-view="table">⊞ Tabelle</button>
-            <button class="dropdown-item" data-view="list">☰ Liste</button>
+            <button class="dropdown-item" data-view="table"><span data-icon="table"></span> Tabelle</button>
+            <button class="dropdown-item" data-view="list"><span data-icon="list"></span> Liste</button>
           </div>
         </div>
         <div class="menu-wrap">
-          <button class="btn small" id="wpIoMenuBtn">Import/Export ▾</button>
+          <button class="btn small" id="wpIoMenuBtn">Import/Export <span data-icon="chevron-down"></span></button>
           <div class="dropdown-menu" id="wpIoMenu">
             <button class="dropdown-item" id="wpImportItem">Import</button>
             <button class="dropdown-item" id="exportWpBtn">Export</button>
@@ -508,14 +520,14 @@
         <span>Fertigkeiten</span>
         <div class="spacer"></div>
         <div class="menu-wrap">
-          <button class="btn small" id="skViewMenuBtn">Ansicht ▾</button>
+          <button class="btn small" id="skViewMenuBtn">Ansicht <span data-icon="chevron-down"></span></button>
           <div class="dropdown-menu" id="skViewMenu">
-            <button class="dropdown-item" data-view="table">⊞ Tabelle</button>
-            <button class="dropdown-item" data-view="list">☰ Liste</button>
+            <button class="dropdown-item" data-view="table"><span data-icon="table"></span> Tabelle</button>
+            <button class="dropdown-item" data-view="list"><span data-icon="list"></span> Liste</button>
           </div>
         </div>
         <div class="menu-wrap">
-          <button class="btn small" id="skIoMenuBtn">Import/Export ▾</button>
+          <button class="btn small" id="skIoMenuBtn">Import/Export <span data-icon="chevron-down"></span></button>
           <div class="dropdown-menu" id="skIoMenu">
             <button class="dropdown-item" id="skImportItem">Import</button>
             <button class="dropdown-item" id="exportSkBtn">Export</button>
@@ -652,6 +664,7 @@
   encounter.combatants = (encounter.combatants || []).map(migrateCombatant);
   if(!encounter.round) encounter.round = 1;
   if(encounter.currentTurnId === undefined) encounter.currentTurnId = null;
+  if(!encounter.phase) encounter.phase = "initiative";
   let settings = load(LS_SET, {});
 
   function saveDb(){ localStorage.setItem(LS_DB, JSON.stringify(db)); }
@@ -700,6 +713,32 @@
   }
   function escHtml(s){
     return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  // ---------- Lucide icons (inline SVG, no CDN dependency) ----------
+  const ICON_PATHS = {
+    dice: '<rect width="12" height="12" x="2" y="10" rx="2" ry="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/><path d="M6 18h.01"/><path d="M10 14h.01"/><path d="M15 6h.01"/><path d="M18 9h.01"/>',
+    sort: '<path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/>',
+    play: '<path d="M21 4v16"/><path d="M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z"/>',
+    refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+    copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+    x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    chevron: '<path d="m9 18 6-6-6-6"/>',
+    swords: '<polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/>',
+    save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
+    menu: '<path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/>',
+    list: '<path d="M3 5h.01"/><path d="M3 12h.01"/><path d="M3 19h.01"/><path d="M8 5h13"/><path d="M8 12h13"/><path d="M8 19h13"/>',
+    table: '<path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/>',
+    undo: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+    bandage: '<path d="M10 10.01h.01"/><path d="M10 14.01h.01"/><path d="M14 10.01h.01"/><path d="M14 14.01h.01"/><path d="M18 6v12"/><path d="M6 6v12"/><rect x="2" y="6" width="20" height="12" rx="2"/>',
+    target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    grip: '<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>'
+  };
+  function icon(name, size){
+    size = size || 14;
+    const rot = name === "chevron-down" ? ' style="transform:rotate(90deg);"' : "";
+    const key = name === "chevron-down" ? "chevron" : name;
+    return `<svg class="lucide-icon"${rot} width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[key] || ""}</svg>`;
   }
 
   // ---------- wound levels (offizielle Tabelle) ----------
@@ -791,16 +830,16 @@
       tr.dataset.id = c.id;
       tr.innerHTML = `
         <td class="cell-name">
-          <span class="drag-handle" title="Ziehen zum Verschieben">⋮⋮</span>
+          <span class="drag-handle" title="Ziehen zum Verschieben">${icon("grip")}</span>
           <input class="name-input" data-field="name" value="${escAttr(c.name)}">
         </td>
         <td class="cell-type">
           <span class="type-pill ${c.type}" data-action="toggleType">${c.type === "spieler" ? "Spieler" : "Gegner"}</span>
-          ${needsRoll ? `<span class="needs-roll-tag" title="Initiative noch würfeln">🎲 würfeln!</span>` : ""}
+          ${needsRoll ? `<span class="needs-roll-tag" title="Initiative noch würfeln">${icon("dice")} würfeln!</span>` : ""}
         </td>
         <td class="cell-init">
           <div class="init-cell">
-            <button class="iconbtn" data-action="rollInit" title="Initiative würfeln (2W10 + Bonus)">🎲</button>
+            <button class="iconbtn" data-action="rollInit" title="Initiative würfeln (2W10 + Bonus)">${icon("dice")}</button>
             <input class="num-input" data-field="initValue" type="number" value="${c.initValue ?? ""}">
             <span class="bonus-tag">+<input class="num-input" style="width:26px;padding:2px;" data-field="initBonus" type="number" value="${c.initBonus ?? 0}"></span>
           </div>
@@ -827,10 +866,10 @@
         </td>
         <td class="cell-actions">
           <div class="rowbtns">
-            <button class="expand-btn" data-action="toggleExpand" title="Notizen ein-/ausklappen">${c.expanded ? "▾" : "▸"}</button>
-            <button class="iconbtn" data-action="saveToDb" title="In Datenbank übernehmen">💾</button>
-            <button class="iconbtn" data-action="dup" title="Duplizieren">⧉</button>
-            <button class="iconbtn" data-action="del" title="Entfernen">✕</button>
+            <button class="expand-btn" data-action="toggleExpand" title="Notizen ein-/ausklappen">${icon(c.expanded ? "chevron-down" : "chevron")}</button>
+            ${c.expanded ? `<button class="iconbtn" data-action="saveToDb" title="In Datenbank übernehmen">${icon("save")}</button>` : ""}
+            <button class="iconbtn" data-action="dup" title="Duplizieren">${icon("copy")}</button>
+            <button class="iconbtn" data-action="del" title="Entfernen">${icon("x")}</button>
           </div>
         </td>
         <td class="cell-preview">${(!c.expanded) ? buildPreviewWrap(c) : ""}</td>
@@ -862,7 +901,7 @@
       <div class="detail-grid">
         <div class="detail-field">
           <label>Wundgrade
-            <button class="mini-link-btn" data-action="regenWounds">↻ neu berechnen (LP-Max &amp; KO)</button>
+            <button class="mini-link-btn" data-action="regenWounds">${icon("undo")} neu berechnen (LP-Max &amp; KO)</button>
           </label>
           <textarea data-field="woundNotes" placeholder="Eigene Notizen zu den Wundgraden...">${escHtml(c.woundNotes)}</textarea>
         </div>
@@ -910,7 +949,7 @@
               <span class="type-pill ${c.type}" data-action="toggleType" style="cursor:pointer;">${c.type === "spieler" ? "Spieler" : "Gegner"}</span>
               <div class="stat-stack"><span class="stat-lbl">Ini (2W10)</span>
                 <div class="init-cell">
-                  <button class="iconbtn" data-action="rollInit" title="Initiative würfeln">🎲</button>
+                  <button class="iconbtn" data-action="rollInit" title="Initiative würfeln">${icon("dice")}</button>
                   <input class="num-input" data-field="initValue" type="number" value="${c.initValue ?? ""}">
                   <span class="bonus-tag">+<input class="num-input" style="width:26px;padding:2px;" data-field="initBonus" type="number" value="${c.initBonus ?? 0}"></span>
                 </div>
@@ -926,11 +965,11 @@
               <div class="stat-stack"><span class="stat-lbl">RS</span><input class="num-input stat-input" data-field="rs" type="number" value="${c.rs ?? 0}"></div>
               <span class="wound-badge" style="background:${wi.bg};color:${wi.fg};">${wi.label}</span>
               <div class="rowbtns">
-                <button class="btn small" data-action="collapseEncListItem">▾ fertig</button>
-                <button class="expand-btn" data-action="toggleExpand" title="Notizen ein-/ausklappen">${c.expanded ? "▾" : "▸"} Notizen</button>
-                <button class="iconbtn" data-action="saveToDb" title="In Datenbank übernehmen">💾</button>
-                <button class="iconbtn" data-action="dup" title="Duplizieren">⧉</button>
-                <button class="iconbtn" data-action="del" title="Entfernen">✕</button>
+                <button class="btn small" data-action="collapseEncListItem">${icon("chevron-down")} fertig</button>
+                <button class="expand-btn" data-action="toggleExpand" title="Notizen ein-/ausklappen">${icon(c.expanded ? "chevron-down" : "chevron")} Notizen</button>
+                ${c.expanded ? `<button class="iconbtn" data-action="saveToDb" title="In Datenbank übernehmen">${icon("save")}</button>` : ""}
+                <button class="iconbtn" data-action="dup" title="Duplizieren">${icon("copy")}</button>
+                <button class="iconbtn" data-action="del" title="Entfernen">${icon("x")}</button>
               </div>
             </div>
             ${c.expanded ? `<div style="margin-top:10px;">${combatantDetailPanelHtml(c)}</div>` : ""}
@@ -944,7 +983,7 @@
           <strong>${escHtml(c.name)}</strong>
           <span class="db-list-stats">Ini ${c.initValue || "–"} · LP ${c.lpCurrent}/${c.lpMax} · VW ${c.vw||0} · RS ${c.rs||0}</span>
           <span class="wound-badge" style="background:${wi.bg};color:${wi.fg};">${wi.label}</span>
-          ${needsRoll ? `<span class="needs-roll-tag">🎲 würfeln!</span>` : ""}
+          ${needsRoll ? `<span class="needs-roll-tag">${icon("dice")} würfeln!</span>` : ""}
         </div>
       `;
     }).join("");
@@ -1114,9 +1153,10 @@
     return name.trim() + " 2";
   }
 
-  // ---------- round counter / sort / clear ----------
-  document.getElementById("newRound").onclick = () => { encounter.round++; saveEnc(); renderEncounter(); };
+  // ---------- round counter / phase system ----------
   document.getElementById("roundMinus").onclick = () => { encounter.round = Math.max(1, encounter.round - 1); saveEnc(); renderEncounter(); };
+  document.getElementById("roundPlus").onclick = () => { encounter.round++; saveEnc(); renderEncounter(); };
+
   function setupViewMenu(menuBtnId, menuId, tableElId, listElId, getMode, setMode, rerenderFn){
     const btn = document.getElementById(menuBtnId);
     const menu = document.getElementById(menuId);
@@ -1143,25 +1183,66 @@
   setupViewMenu("encViewMenuBtn", "encViewMenu", "encTable", "encListView",
     () => encViewMode, (v) => { encViewMode = v; }, renderEncounter);
 
-  document.getElementById("sortBtn").onclick = () => {
-    encounter.combatants.sort((a,b) => (b.initValue||0) - (a.initValue||0));
-    saveEnc();
-    renderEncounter();
-    toast("Initiative sortiert");
+  const phaseLabels = {
+    initiative: { icon: "dice", text: "Initiative!" },
+    sort: { icon: "sort", text: "Sortieren!" },
+    turn: { icon: "play", text: "Nächste Figur" },
+    round: { icon: "refresh", text: "Neue Runde" }
   };
-  document.getElementById("nextTurnBtn").onclick = () => {
-    if(encounter.combatants.length === 0){ toast("Keine Kämpfer im Encounter"); return; }
-    const idx = encounter.combatants.findIndex(c => c.id === encounter.currentTurnId);
-    const nextIdx = idx + 1;
-    if(nextIdx >= encounter.combatants.length){
+
+  function updatePhaseButton(){
+    const cur = phaseLabels[encounter.phase];
+    document.getElementById("phaseMainBtn").innerHTML = `${icon(cur.icon)} ${cur.text}`;
+    document.querySelectorAll("#phaseMenu [data-phase]").forEach(item => {
+      const info = phaseLabels[item.dataset.phase];
+      item.innerHTML = `${icon(info.icon)} ${info.text}`;
+      item.classList.toggle("active-view", item.dataset.phase === encounter.phase);
+    });
+  }
+
+  function runPhase(phase){
+    if(encounter.combatants.length === 0 && phase !== "round"){
+      toast("Keine Figuren im Encounter");
+      return;
+    }
+    if(phase === "initiative"){
+      toast("Initiative würfeln!");
+      encounter.phase = "sort";
+    } else if(phase === "sort"){
+      encounter.combatants.sort((a,b) => (b.initValue||0) - (a.initValue||0));
       encounter.currentTurnId = null;
-      toast("Alle Kämpfer durch – neue Initiative für die nächste Runde würfeln!");
-    } else {
-      encounter.currentTurnId = encounter.combatants[nextIdx].id;
+      toast("Initiative sortiert");
+      encounter.phase = "turn";
+    } else if(phase === "turn"){
+      const idx = encounter.combatants.findIndex(c => c.id === encounter.currentTurnId);
+      const nextIdx = idx + 1;
+      if(nextIdx >= encounter.combatants.length){
+        encounter.currentTurnId = null;
+        toast("Alle Figuren durch – neue Runde starten!");
+        encounter.phase = "round";
+      } else {
+        encounter.currentTurnId = encounter.combatants[nextIdx].id;
+        encounter.phase = "turn";
+      }
+    } else if(phase === "round"){
+      encounter.round++;
+      encounter.currentTurnId = null;
+      toast(`Runde ${encounter.round} beginnt`);
+      encounter.phase = "initiative";
     }
     saveEnc();
     renderEncounter();
-  };
+    updatePhaseButton();
+  }
+
+  document.getElementById("phaseMainBtn").onclick = () => runPhase(encounter.phase);
+  setupMenu(document.getElementById("phaseCaretBtn"), document.getElementById("phaseMenu"));
+  document.querySelectorAll("#phaseMenu [data-phase]").forEach(item => {
+    item.addEventListener("click", () => runPhase(item.dataset.phase));
+  });
+  updatePhaseButton();
+
+
   function setupMenu(toggleBtn, menuEl){
     toggleBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1198,7 +1279,7 @@
   const addRow = document.getElementById("addRow");
   addToggle.onclick = () => {
     addRow.classList.toggle("open");
-    addToggle.textContent = addRow.classList.contains("open") ? "– Hinzufügen ausblenden" : "+ Kämpfer hinzufügen";
+    addToggle.textContent = addRow.classList.contains("open") ? "– Hinzufügen ausblenden" : "+ Figur hinzufügen";
   };
 
   addRow.querySelectorAll("[data-addmode]").forEach(btn => {
@@ -1217,7 +1298,7 @@
       toggleBtn.textContent = row.classList.contains("open") ? closeLabel : openLabel;
     };
   }
-  setupAddToggle("tplAddToggle", "tplAddRow", "+ Kämpfer anlegen", "– Anlegen ausblenden");
+  setupAddToggle("tplAddToggle", "tplAddRow", "+ Figur anlegen", "– Anlegen ausblenden");
   setupAddToggle("wpAddToggle", "wpAddRow", "+ Waffe anlegen", "– Anlegen ausblenden");
   setupAddToggle("skAddToggle", "skAddRow", "+ Fertigkeit anlegen", "– Anlegen ausblenden");
 
@@ -1331,7 +1412,7 @@
   document.getElementById("allImportItem").onclick = () => document.getElementById("importAllFile").click();
 
   document.getElementById("resetDbBtn").onclick = () => {
-    showConfirm("Datenbank (Kämpfer, Waffen, Fertigkeiten) wirklich auf die Startwerte zurücksetzen? Eigene Einträge gehen dabei verloren.", {
+    showConfirm("Datenbank (Figuren, Waffen, Fertigkeiten) wirklich auf die Startwerte zurücksetzen? Eigene Einträge gehen dabei verloren.", {
       okText: "Ja, zurücksetzen",
       onOk: () => {
         db = defaultDb();
@@ -1368,7 +1449,7 @@
         if(!cleanedDb.length && !cleanedWp.length && !cleanedSk.length){
           throw new Error("Keine gültigen Daten gefunden");
         }
-        showConfirm(`Gefunden: ${cleanedDb.length} Kämpfer, ${cleanedWp.length} Waffen, ${cleanedSk.length} Fertigkeiten. Zu bestehenden Datenbanken hinzufügen, oder alles komplett ersetzen?`, {
+        showConfirm(`Gefunden: ${cleanedDb.length} Figuren, ${cleanedWp.length} Waffen, ${cleanedSk.length} Fertigkeiten. Zu bestehenden Datenbanken hinzufügen, oder alles komplett ersetzen?`, {
           okText: "Hinzufügen",
           cancelText: "Alles ersetzen",
           okClass: "primary",
@@ -1421,9 +1502,9 @@
         <td data-label="KO"><input class="db-num" data-f="ko" type="number" value="${t.ko||0}"></td>
         <td>
           <div class="rowbtns">
-            <button class="expand-btn" data-action="toggleTplExpand" title="Waffen &amp; Fertigkeiten zuweisen">${isOpen ? "▾" : "▸"}⚔</button>
-            <button class="iconbtn" data-action="dupTpl" title="Duplizieren">⧉</button>
-            <button class="iconbtn" data-action="delTpl" title="Löschen">✕</button>
+            <button class="expand-btn" data-action="toggleTplExpand" title="Waffen &amp; Fertigkeiten zuweisen">${icon(isOpen ? "chevron-down" : "chevron")}${icon("swords")}</button>
+            <button class="iconbtn" data-action="dupTpl" title="Duplizieren">${icon("copy")}</button>
+            <button class="iconbtn" data-action="delTpl" title="Löschen">${icon("x")}</button>
           </div>
         </td>
       `;
@@ -1436,7 +1517,7 @@
         dtr.innerHTML = `
           <td colspan="8">
             <div class="detail-field">
-              <label>Waffen / Angriff dieses Kämpfers (wird beim Hinzufügen zum Kampf direkt übernommen)</label>
+              <label>Waffen / Angriff dieser Figur (wird beim Hinzufügen zum Kampf direkt übernommen)</label>
               <textarea data-f="weaponText" placeholder="Name, Wert...">${escHtml(t.weaponText)}</textarea>
               <div class="weapon-pick">
                 <select data-role="weaponSelectTpl">
@@ -1447,7 +1528,7 @@
               </div>
             </div>
             <div class="detail-field" style="margin-top:10px;">
-              <label>Fertigkeiten dieses Kämpfers (wird beim Hinzufügen zum Kampf direkt übernommen)</label>
+              <label>Fertigkeiten dieser Figur (wird beim Hinzufügen zum Kampf direkt übernommen)</label>
               <textarea data-f="skillsText" placeholder="Relevante Fertigkeiten...">${escHtml(t.skillsText)}</textarea>
               <div class="weapon-pick">
                 <select data-role="skillSelectTpl">
@@ -1469,7 +1550,7 @@
     const listEl = document.getElementById("dbListView");
     if(!listEl) return;
     if(db.length === 0){
-      listEl.innerHTML = '<div style="color:var(--dim);padding:10px;">Keine Kämpfer in der Datenbank.</div>';
+      listEl.innerHTML = '<div style="color:var(--dim);padding:10px;">Keine Figuren in der Datenbank.</div>';
       return;
     }
     listEl.innerHTML = db.map(t => {
@@ -1492,15 +1573,15 @@
               <div class="stat-stack"><span class="stat-lbl">RS</span><input class="db-num" data-f="rs" type="number" value="${t.rs||0}"></div>
               <div class="stat-stack"><span class="stat-lbl">KO</span><input class="db-num" data-f="ko" type="number" value="${t.ko||0}"></div>
               <div class="rowbtns">
-                <button class="btn small" data-action="collapseListItem">▾ fertig</button>
-                <button class="expand-btn" data-action="toggleTplExpand" title="Waffen &amp; Fertigkeiten zuweisen">${isTplOpen ? "▾" : "▸"}⚔</button>
-                <button class="iconbtn" data-action="dupTpl" title="Duplizieren">⧉</button>
-                <button class="iconbtn" data-action="delTpl" title="Löschen">✕</button>
+                <button class="btn small" data-action="collapseListItem">${icon("chevron-down")} fertig</button>
+                <button class="expand-btn" data-action="toggleTplExpand" title="Waffen &amp; Fertigkeiten zuweisen">${icon(isTplOpen ? "chevron-down" : "chevron")}${icon("swords")}</button>
+                <button class="iconbtn" data-action="dupTpl" title="Duplizieren">${icon("copy")}</button>
+                <button class="iconbtn" data-action="delTpl" title="Löschen">${icon("x")}</button>
               </div>
             </div>
             ${isTplOpen ? `
             <div class="detail-field" style="margin-top:10px;">
-              <label>Waffen / Angriff dieses Kämpfers</label>
+              <label>Waffen / Angriff dieser Figur</label>
               <textarea data-f="weaponText" placeholder="Name, Wert...">${escHtml(t.weaponText)}</textarea>
               <div class="weapon-pick">
                 <select data-role="weaponSelectTpl">
@@ -1511,7 +1592,7 @@
               </div>
             </div>
             <div class="detail-field" style="margin-top:10px;">
-              <label>Fertigkeiten dieses Kämpfers</label>
+              <label>Fertigkeiten dieser Figur</label>
               <textarea data-f="skillsText" placeholder="Relevante Fertigkeiten...">${escHtml(t.skillsText)}</textarea>
               <div class="weapon-pick">
                 <select data-role="skillSelectTpl">
@@ -1679,7 +1760,7 @@
       tr.innerHTML = `
         <td data-label="Name"><input class="db-name" data-f="name" value="${escAttr(w.name)}"></td>
         <td data-label="Beschreibung"><textarea class="db-desc" data-f="description">${escHtml(w.description)}</textarea></td>
-        <td><button class="iconbtn" data-action="delWp" title="Löschen">✕</button></td>
+        <td><button class="iconbtn" data-action="delWp" title="Löschen">${icon("x")}</button></td>
       `;
       tr.dataset.id = w.id;
       weaponBody.appendChild(tr);
@@ -1702,8 +1783,8 @@
               <div class="stat-stack" style="align-items:stretch;"><span class="stat-lbl">Name</span><input class="db-name" data-f="name" value="${escAttr(w.name)}"></div>
               <div class="stat-stack" style="align-items:stretch;flex:1;min-width:180px;"><span class="stat-lbl">Beschreibung</span><textarea class="db-desc" data-f="description">${escHtml(w.description)}</textarea></div>
               <div class="rowbtns">
-                <button class="btn small" data-action="collapseWpListItem">▾ fertig</button>
-                <button class="iconbtn" data-action="delWp" title="Löschen">✕</button>
+                <button class="btn small" data-action="collapseWpListItem">${icon("chevron-down")} fertig</button>
+                <button class="iconbtn" data-action="delWp" title="Löschen">${icon("x")}</button>
               </div>
             </div>
           </div>
@@ -1831,7 +1912,7 @@
       tr.innerHTML = `
         <td data-label="Name"><input class="db-name" data-f="name" value="${escAttr(s.name)}"></td>
         <td data-label="Beschreibung"><textarea class="db-desc" data-f="description">${escHtml(s.description)}</textarea></td>
-        <td><button class="iconbtn" data-action="delSk" title="Löschen">✕</button></td>
+        <td><button class="iconbtn" data-action="delSk" title="Löschen">${icon("x")}</button></td>
       `;
       tr.dataset.id = s.id;
       skillBody.appendChild(tr);
@@ -1854,8 +1935,8 @@
               <div class="stat-stack" style="align-items:stretch;"><span class="stat-lbl">Name</span><input class="db-name" data-f="name" value="${escAttr(s.name)}"></div>
               <div class="stat-stack" style="align-items:stretch;flex:1;min-width:180px;"><span class="stat-lbl">Beschreibung</span><textarea class="db-desc" data-f="description">${escHtml(s.description)}</textarea></div>
               <div class="rowbtns">
-                <button class="btn small" data-action="collapseSkListItem">▾ fertig</button>
-                <button class="iconbtn" data-action="delSk" title="Löschen">✕</button>
+                <button class="btn small" data-action="collapseSkListItem">${icon("chevron-down")} fertig</button>
+                <button class="iconbtn" data-action="delSk" title="Löschen">${icon("x")}</button>
               </div>
             </div>
           </div>
@@ -1971,7 +2052,7 @@
     reader.readAsText(file);
   });
 
-  // ---------- import / export (Kämpfer-DB) ----------
+  // ---------- import / export (Figuren-DB) ----------
   document.getElementById("exportBtn").onclick = () => {
     const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -2075,6 +2156,10 @@
     db = defaultDb();
     saveDb();
   }
+
+  document.querySelectorAll("[data-icon]").forEach(el => {
+    el.innerHTML = icon(el.dataset.icon);
+  });
 
   renderDbSelect();
   renderEncounter();
