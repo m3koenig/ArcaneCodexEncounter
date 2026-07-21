@@ -311,6 +311,8 @@
     table.db input, table.db select, table.db textarea{width:100%;}
   }
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14161c">
 </head>
 <body>
 
@@ -2163,6 +2165,14 @@
 
   renderDbSelect();
   renderEncounter();
+
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(err => {
+        console.log("Service Worker Registrierung fehlgeschlagen:", err);
+      });
+    });
+  }
 })();
 </script>
 </body>
