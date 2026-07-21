@@ -3,8 +3,9 @@
 const CACHE_NAME = 'acencounter-v1';
 const APP_SHELL = [
   './',
-  './index.html'
-  // Manifest und Icons sind als Data-URI direkt in index.html eingebettet,
+  './index.html', 
+  './manifest.json'
+  // Icons sind als Data-URI direkt in index.html eingebettet,
   // brauchen also keine eigenen Cache-Einträge mehr.
 ];
 
