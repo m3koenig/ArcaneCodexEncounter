@@ -1,0 +1,52 @@
+{
+  "kaempfer": [
+    {
+      "name": "Goblin",
+      "type": "gegner",
+      "lpMax": 48,
+      "initBonus": 1,
+      "vw": 22,
+      "rs": 1,
+      "ko": 8,
+      "woundNotes": "",
+      "weaponText": "Kurzschwert: 12, 1W6+2",
+      "skillsText": "Schleichen 2, Wildnisgespür 1"
+    },
+    {
+      "name": "Ork-Krieger",
+      "type": "gegner",
+      "lpMax": 72,
+      "initBonus": 0,
+      "vw": 25,
+      "rs": 3,
+      "ko": 12,
+      "woundNotes": "",
+      "weaponText": "Ork-Axt: 11, 1W10+3, zweihändig",
+      "skillsText": "Einschüchtern 3"
+    },
+    {
+      "name": "Held",
+      "type": "spieler",
+      "lpMax": 72,
+      "initBonus": 2,
+      "vw": 26,
+      "rs": 2,
+      "ko": 12,
+      "woundNotes": "",
+      "weaponText": "Langbogen: 10, 1W8, Reichweite mittel",
+      "skillsText": "Heilkunde 2, Klettern 1"
+    }
+  ],
+  "waffen": [
+    { "name": "Kurzschwert", "description": "12, 1W6+2" },
+    { "name": "Langbogen", "description": "10, 1W8, Reichweite mittel" },
+    { "name": "Ork-Axt", "description": "11, 1W10+3, zweihändig" }
+  ],
+  "fertigkeiten": [
+    { "name": "Schleichen", "description": "2" },
+    { "name": "Wildnisgespür", "description": "1" },
+    { "name": "Einschüchtern", "description": "3" },
+    { "name": "Heilkunde", "description": "2" },
+    { "name": "Klettern", "description": "1" }
+  ]
+}
