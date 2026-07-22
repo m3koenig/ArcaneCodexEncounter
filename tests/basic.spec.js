@@ -19,7 +19,8 @@ test('quick-add a fighter and see it in the encounter list', async ({ page }) =>
   await page.click('#quickAdd');
 
   await expect(page.locator('#emptyState')).toBeHidden();
-  await expect(page.locator('#encBody')).toContainText('Test-Goblin');
+  // Namen stehen als Input-Value, nicht als Text -> toHaveValue statt toContainText
+  await expect(page.locator('#encBody [data-field="name"]').first()).toHaveValue('Test-Goblin');
 });
 
 test('rolling initiative fills in a value', async ({ page }) => {
@@ -55,7 +56,8 @@ test('database modal opens via burger menu and shows seeded fighters', async ({ 
   await page.click('#burgerBtn');
   await page.click('#openDb');
   await expect(page.locator('#dbModal')).toHaveClass(/open/);
-  await expect(page.locator('#dbBody')).toContainText('Goblin');
+  // Seed-Daten kommen async aus default-database.json -> Assertion wartet automatisch (Playwright Auto-Retry)
+  await expect(page.locator('#dbBody input[data-f="name"][value="Goblin"]')).toBeVisible();
 });
 
 test('adding a weapon in the Waffen tab shows it in the list', async ({ page }) => {
@@ -66,10 +68,10 @@ test('adding a weapon in the Waffen tab shows it in the list', async ({ page }) 
   await page.fill('#newWpName', 'Testklinge');
   await page.fill('#newWpDesc', '99, 1W4');
   await page.click('#addWp');
-  await expect(page.locator('#weaponBody')).toContainText('Testklinge');
+  await expect(page.locator('#weaponBody input[data-f="name"][value="Testklinge"]')).toBeVisible();
 });
 
-test('round counter increases via the phase system after a full cycle', async ({ page }) => {
+test('round counter increases when the "Neue Runde"-phase is run directly via the submenu', async ({ page }) => {
   await page.click('#addToggle');
   await page.click('[data-addmode="manual"]');
   await page.fill('#quickName', 'Rundentest');
@@ -77,9 +79,11 @@ test('round counter increases via the phase system after a full cycle', async ({
   await page.click('#quickAdd');
 
   await expect(page.locator('#roundNum')).toHaveText('1');
-  await page.click('#phaseMainBtn'); // Initiative -> Sortieren
-  await page.click('#phaseMainBtn'); // Sortieren -> Nächste Figur (turn 1)
-  await page.click('#phaseMainBtn'); // only 1 fighter -> Neue Runde
-  await page.click('#phaseMainBtn'); // Neue Runde -> Initiative, round++
+
+  // Direkt ueber das Untermenue die "Neue Runde"-Phase ausloesen, unabhaengig
+  // von der aktuellen Phase -> robuster als die Klick-Kette nachzuzaehlen.
+  await page.click('#phaseCaretBtn');
+  await page.click('#phaseMenu [data-phase="round"]');
+
   await expect(page.locator('#roundNum')).toHaveText('2');
 });
