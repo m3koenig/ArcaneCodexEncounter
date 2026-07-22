@@ -1417,12 +1417,18 @@
   document.getElementById("allImportItem").onclick = () => document.getElementById("importAllFile").click();
 
   document.getElementById("resetDbBtn").onclick = () => {
-    showConfirm("Datenbank (Figuren, Waffen, Fertigkeiten) wirklich auf die Startwerte zurücksetzen? Eigene Einträge gehen dabei verloren.", {
+    showConfirm("Datenbank (Figuren, Waffen, Fertigkeiten) wirklich auf die Startwerte aus default-database.json zurücksetzen? Eigene Einträge gehen dabei verloren.", {
       okText: "Ja, zurücksetzen",
-      onOk: () => {
-        db = defaultDb();
-        weapons = defaultWeapons();
-        skills = defaultSkills();
+      onOk: async () => {
+        const defaults = await loadDefaultData();
+        if(!defaults){
+          toast("default-database.json konnte nicht geladen werden");
+          return;
+        }
+        defaults.kaempfer.forEach(t => { t.woundNotes = t.woundNotes || generateWoundText(t.lpMax, t.ko); });
+        db = defaults.kaempfer;
+        weapons = defaults.waffen;
+        skills = defaults.fertigkeiten;
         saveDb(); saveWeapons(); saveSkills();
         renderDbTable(); renderWeaponTable(); renderSkillTable(); renderDbSelect(); renderTplCreateSelects();
         toast("Datenbank zurückgesetzt");
@@ -2106,60 +2112,48 @@
     reader.readAsText(file);
   });
 
-  // ---------- default/seed data (erstlauf & manueller reset) ----------
-  function defaultWeapons(){
-    return [
-      { id: uid(), name: "Kurzschwert", description: "12, 1W6+2" },
-      { id: uid(), name: "Langbogen", description: "10, 1W8, Reichweite mittel" },
-      { id: uid(), name: "Ork-Axt", description: "11, 1W10+3, zweihändig" }
-    ];
-  }
-  function defaultSkills(){
-    return [
-      { id: uid(), name: "Schleichen", description: "2" },
-      { id: uid(), name: "Wildnisgespür", description: "1" },
-      { id: uid(), name: "Einschüchtern", description: "3" },
-      { id: uid(), name: "Heilkunde", description: "2" },
-      { id: uid(), name: "Klettern", description: "1" }
-    ];
-  }
-  function defaultDb(){
-    const goblinLp = 48, goblinKo = 8;
-    const orkLp = 72, orkKo = 12;
-    const heldLp = 72, heldKo = 12;
-    return [
-      {
-        id: uid(), name: "Goblin", type: "gegner", lpMax: goblinLp, initBonus: 1, vw: 22, rs: 1, ko: goblinKo,
-        woundNotes: generateWoundText(goblinLp, goblinKo),
-        weaponText: "Kurzschwert: 12, 1W6+2",
-        skillsText: "Schleichen 2, Wildnisgespür 1"
-      },
-      {
-        id: uid(), name: "Ork-Krieger", type: "gegner", lpMax: orkLp, initBonus: 0, vw: 25, rs: 3, ko: orkKo,
-        woundNotes: generateWoundText(orkLp, orkKo),
-        weaponText: "Ork-Axt: 11, 1W10+3, zweihändig",
-        skillsText: "Einschüchtern 3"
-      },
-      {
-        id: uid(), name: "Held", type: "spieler", lpMax: heldLp, initBonus: 2, vw: 26, rs: 2, ko: heldKo,
-        woundNotes: generateWoundText(heldLp, heldKo),
-        weaponText: "Langbogen: 10, 1W8, Reichweite mittel",
-        skillsText: "Heilkunde 2, Klettern 1"
-      }
-    ];
+  // ---------- default/seed data (aus default-database.json, erstlauf & manueller reset) ----------
+  async function loadDefaultData(){
+    try{
+      const res = await fetch("./default-database.json");
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      return {
+        kaempfer: Array.isArray(data.kaempfer) ? data.kaempfer.map(migrateTemplate) : [],
+        waffen: Array.isArray(data.waffen) ? data.waffen.map(migrateWeapon) : [],
+        fertigkeiten: Array.isArray(data.fertigkeiten) ? data.fertigkeiten.map(migrateSkill) : []
+      };
+    }catch(err){
+      console.log("default-database.json konnte nicht geladen werden:", err);
+      return null;
+    }
   }
 
-  if(weapons.length === 0){
-    weapons = defaultWeapons();
-    saveWeapons();
-  }
-  if(skills.length === 0){
-    skills = defaultSkills();
-    saveSkills();
-  }
-  if(db.length === 0){
-    db = defaultDb();
-    saveDb();
+  async function seedIfEmpty(){
+    if(db.length > 0 && weapons.length > 0 && skills.length > 0) return;
+    const defaults = await loadDefaultData();
+    if(!defaults) return;
+    let changed = false;
+    if(db.length === 0 && defaults.kaempfer.length){
+      defaults.kaempfer.forEach(t => { t.woundNotes = t.woundNotes || generateWoundText(t.lpMax, t.ko); });
+      db = defaults.kaempfer;
+      saveDb();
+      changed = true;
+    }
+    if(weapons.length === 0 && defaults.waffen.length){
+      weapons = defaults.waffen;
+      saveWeapons();
+      changed = true;
+    }
+    if(skills.length === 0 && defaults.fertigkeiten.length){
+      skills = defaults.fertigkeiten;
+      saveSkills();
+      changed = true;
+    }
+    if(changed){
+      renderDbSelect();
+      renderEncounter();
+    }
   }
 
   document.querySelectorAll("[data-icon]").forEach(el => {
@@ -2168,6 +2162,7 @@
 
   renderDbSelect();
   renderEncounter();
+  seedIfEmpty();
 
   if("serviceWorker" in navigator){
     window.addEventListener("load", () => {
