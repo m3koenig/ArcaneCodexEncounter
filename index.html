@@ -418,7 +418,6 @@
           <button class="dropdown-item" id="exportAllBtn">Alles exportieren</button>
         </div>
       </div>
-      <input type="file" id="importAllFile" accept="application/json" style="display:none;">
       <button class="btn danger small" id="resetDbBtn">Zurücksetzen</button>
       <button class="btn small" id="closeDb">Schließen</button>
     </div>
@@ -447,7 +446,6 @@
             <button class="dropdown-item" id="exportBtn">Export</button>
           </div>
         </div>
-        <input type="file" id="importFile" accept="application/json" style="display:none;">
       </div>
 
       <div class="addToggleWrap">
@@ -501,7 +499,6 @@
             <button class="dropdown-item" id="exportWpBtn">Export</button>
           </div>
         </div>
-        <input type="file" id="importWpFile" accept="application/json" style="display:none;">
       </div>
       <div class="addToggleWrap">
         <button class="btn primary small" id="wpAddToggle">+ Waffe anlegen</button>
@@ -538,7 +535,6 @@
             <button class="dropdown-item" id="exportSkBtn">Export</button>
           </div>
         </div>
-        <input type="file" id="importSkFile" accept="application/json" style="display:none;">
       </div>
       <div class="addToggleWrap">
         <button class="btn primary small" id="skAddToggle">+ Fertigkeit anlegen</button>
@@ -571,6 +567,23 @@
     <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button class="btn" id="confirmCancelBtn"></button>
       <button class="btn danger" id="confirmOkBtn"></button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="pasteImportModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <h2 id="pasteImportTitle">Import</h2>
+      <div class="spacer"></div>
+      <button class="btn small" id="pasteImportClose">Schließen</button>
+    </div>
+    <label style="display:block;color:var(--dim);font-size:12px;margin-bottom:6px;">JSON hier einfügen, oder eine Datei wählen (füllt das Feld zum Prüfen):</label>
+    <textarea id="pasteImportText" style="width:100%;min-height:200px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:8px;font-family:var(--mono);font-size:12px;" placeholder="[ ... ] JSON hier einfügen"></textarea>
+    <input type="file" id="pasteImportFilePicker" accept="application/json" style="display:none;">
+    <div style="display:flex;gap:8px;margin-top:10px;justify-content:space-between;align-items:center;">
+      <button class="btn small" id="pasteImportFileBtn">Datei wählen</button>
+      <button class="btn primary small" id="pasteImportSubmit">Importieren</button>
     </div>
   </div>
 </div>
@@ -1405,16 +1418,49 @@
     () => skViewMode, (v) => { skViewMode = v; });
 
   setupMenu(document.getElementById("dbIoMenuBtn"), document.getElementById("dbIoMenu"));
-  document.getElementById("dbImportItem").onclick = () => document.getElementById("importFile").click();
+  document.getElementById("dbImportItem").onclick = () => openPasteImportModal("kaempfer", "Import: Figuren");
 
   setupMenu(document.getElementById("wpIoMenuBtn"), document.getElementById("wpIoMenu"));
-  document.getElementById("wpImportItem").onclick = () => document.getElementById("importWpFile").click();
+  document.getElementById("wpImportItem").onclick = () => openPasteImportModal("waffen", "Import: Waffen");
 
   setupMenu(document.getElementById("skIoMenuBtn"), document.getElementById("skIoMenu"));
-  document.getElementById("skImportItem").onclick = () => document.getElementById("importSkFile").click();
+  document.getElementById("skImportItem").onclick = () => openPasteImportModal("fertigkeiten", "Import: Fertigkeiten");
 
   setupMenu(document.getElementById("allIoMenuBtn"), document.getElementById("allIoMenu"));
-  document.getElementById("allImportItem").onclick = () => document.getElementById("importAllFile").click();
+  document.getElementById("allImportItem").onclick = () => openPasteImportModal("alles", "Import: Alles (Figuren, Waffen, Fertigkeiten)");
+
+  // ---------- gemeinsames Import-Modal (Text einfügen ODER Datei wählen) ----------
+  let pasteImportType = null;
+  const pasteImportModal = document.getElementById("pasteImportModal");
+
+  function openPasteImportModal(type, title){
+    pasteImportType = type;
+    document.getElementById("pasteImportTitle").textContent = title;
+    document.getElementById("pasteImportText").value = "";
+    pasteImportModal.classList.add("open");
+  }
+  document.getElementById("pasteImportClose").onclick = () => pasteImportModal.classList.remove("open");
+  pasteImportModal.addEventListener("click", (e) => { if(e.target === pasteImportModal) pasteImportModal.classList.remove("open"); });
+
+  document.getElementById("pasteImportFileBtn").onclick = () => document.getElementById("pasteImportFilePicker").click();
+  document.getElementById("pasteImportFilePicker").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { document.getElementById("pasteImportText").value = reader.result; };
+    reader.readAsText(file);
+    e.target.value = "";
+  });
+
+  document.getElementById("pasteImportSubmit").onclick = () => {
+    const text = document.getElementById("pasteImportText").value.trim();
+    if(!text){ toast("Bitte JSON einfügen oder eine Datei wählen"); return; }
+    pasteImportModal.classList.remove("open");
+    if(pasteImportType === "kaempfer") processKaempferImport(text);
+    else if(pasteImportType === "waffen") processWaffenImport(text);
+    else if(pasteImportType === "fertigkeiten") processFertigkeitenImport(text);
+    else if(pasteImportType === "alles") processAllesImport(text);
+  };
 
   document.getElementById("resetDbBtn").onclick = () => {
     showConfirm("Datenbank (Figuren, Waffen, Fertigkeiten) wirklich auf die Startwerte aus default-database.json zurücksetzen? Eigene Einträge gehen dabei verloren.", {
@@ -1447,51 +1493,44 @@
     URL.revokeObjectURL(url);
   };
 
-  document.getElementById("importAllFile").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try{
-        const data = JSON.parse(reader.result);
-        const cleanedDb = Array.isArray(data.kaempfer) ? data.kaempfer.map(migrateTemplate) : [];
-        const cleanedWp = Array.isArray(data.waffen) ? data.waffen.map(migrateWeapon) : [];
-        const cleanedSk = Array.isArray(data.fertigkeiten) ? data.fertigkeiten.map(migrateSkill) : [];
-        if(!cleanedDb.length && !cleanedWp.length && !cleanedSk.length){
-          throw new Error("Keine gültigen Daten gefunden");
-        }
-        showConfirm(`Gefunden: ${cleanedDb.length} Figuren, ${cleanedWp.length} Waffen, ${cleanedSk.length} Fertigkeiten. Zu bestehenden Datenbanken hinzufügen, oder alles komplett ersetzen?`, {
-          okText: "Hinzufügen",
-          cancelText: "Alles ersetzen",
-          okClass: "primary",
-          onOk: () => {
-            const newDb = dedupeByName(db, cleanedDb);
-            const newWp = dedupeByName(weapons, cleanedWp);
-            const newSk = dedupeByName(skills, cleanedSk);
-            const skipped = (cleanedDb.length - newDb.length) + (cleanedWp.length - newWp.length) + (cleanedSk.length - newSk.length);
-            db = db.concat(newDb);
-            weapons = weapons.concat(newWp);
-            skills = skills.concat(newSk);
-            saveDb(); saveWeapons(); saveSkills();
-            renderDbTable(); renderWeaponTable(); renderSkillTable(); renderDbSelect(); renderTplCreateSelects();
-            toast(skipped > 0 ? `Import erfolgreich (${skipped} Duplikate übersprungen)` : "Import erfolgreich");
-          },
-          onCancel: () => {
-            db = cleanedDb;
-            weapons = cleanedWp;
-            skills = cleanedSk;
-            saveDb(); saveWeapons(); saveSkills();
-            renderDbTable(); renderWeaponTable(); renderSkillTable(); renderDbSelect(); renderTplCreateSelects();
-            toast("Datenbanken ersetzt");
-          }
-        });
-      }catch(err){
-        toast("Import fehlgeschlagen: kein gültiges Gesamt-Datenbank-JSON.");
+  function processAllesImport(text){
+    try{
+      const data = JSON.parse(text);
+      const cleanedDb = Array.isArray(data.kaempfer) ? data.kaempfer.map(migrateTemplate) : [];
+      const cleanedWp = Array.isArray(data.waffen) ? data.waffen.map(migrateWeapon) : [];
+      const cleanedSk = Array.isArray(data.fertigkeiten) ? data.fertigkeiten.map(migrateSkill) : [];
+      if(!cleanedDb.length && !cleanedWp.length && !cleanedSk.length){
+        throw new Error("Keine gültigen Daten gefunden");
       }
-      e.target.value = "";
-    };
-    reader.readAsText(file);
-  });
+      showConfirm(`Gefunden: ${cleanedDb.length} Figuren, ${cleanedWp.length} Waffen, ${cleanedSk.length} Fertigkeiten. Zu bestehenden Datenbanken hinzufügen, oder alles komplett ersetzen?`, {
+        okText: "Hinzufügen",
+        cancelText: "Alles ersetzen",
+        okClass: "primary",
+        onOk: () => {
+          const newDb = dedupeByName(db, cleanedDb);
+          const newWp = dedupeByName(weapons, cleanedWp);
+          const newSk = dedupeByName(skills, cleanedSk);
+          const skipped = (cleanedDb.length - newDb.length) + (cleanedWp.length - newWp.length) + (cleanedSk.length - newSk.length);
+          db = db.concat(newDb);
+          weapons = weapons.concat(newWp);
+          skills = skills.concat(newSk);
+          saveDb(); saveWeapons(); saveSkills();
+          renderDbTable(); renderWeaponTable(); renderSkillTable(); renderDbSelect(); renderTplCreateSelects();
+          toast(skipped > 0 ? `Import erfolgreich (${skipped} Duplikate übersprungen)` : "Import erfolgreich");
+        },
+        onCancel: () => {
+          db = cleanedDb;
+          weapons = cleanedWp;
+          skills = cleanedSk;
+          saveDb(); saveWeapons(); saveSkills();
+          renderDbTable(); renderWeaponTable(); renderSkillTable(); renderDbSelect(); renderTplCreateSelects();
+          toast("Datenbanken ersetzt");
+        }
+      });
+    }catch(err){
+      toast("Import fehlgeschlagen: kein gültiges Gesamt-Datenbank-JSON.");
+    }
+  }
 
   function renderDbTable(){
     dbBody.innerHTML = "";
@@ -1873,43 +1912,36 @@
     URL.revokeObjectURL(url);
   };
 
-  document.getElementById("importWpFile").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try{
-        const data = JSON.parse(reader.result);
-        if(!Array.isArray(data)) throw new Error("Kein Array");
-        const cleaned = data.map(migrateWeapon);
-        showConfirm(`${cleaned.length} Waffen gefunden. Zur bestehenden Datenbank hinzufügen, oder komplett ersetzen?`, {
-          okText: "Hinzufügen",
-          cancelText: "Ersetzen",
-          okClass: "primary",
-          onOk: () => {
-            const newWp = dedupeByName(weapons, cleaned);
-            const skipped = cleaned.length - newWp.length;
-            weapons = weapons.concat(newWp);
-            saveWeapons();
-            renderWeaponTable();
-            renderTplCreateSelects();
-            toast(skipped > 0 ? `Waffen-Import erfolgreich (${skipped} Duplikate übersprungen)` : "Waffen-Import erfolgreich");
-          },
-          onCancel: () => {
-            weapons = cleaned;
-            saveWeapons();
-            renderWeaponTable();
-            renderTplCreateSelects();
-            toast("Waffen-Datenbank ersetzt");
-          }
-        });
-      }catch(err){
-        toast("Import fehlgeschlagen: kein gültiges Waffen-JSON.");
-      }
-      e.target.value = "";
-    };
-    reader.readAsText(file);
-  });
+  function processWaffenImport(text){
+    try{
+      const data = JSON.parse(text);
+      if(!Array.isArray(data)) throw new Error("Kein Array");
+      const cleaned = data.map(migrateWeapon);
+      showConfirm(`${cleaned.length} Waffen gefunden. Zur bestehenden Datenbank hinzufügen, oder komplett ersetzen?`, {
+        okText: "Hinzufügen",
+        cancelText: "Ersetzen",
+        okClass: "primary",
+        onOk: () => {
+          const newWp = dedupeByName(weapons, cleaned);
+          const skipped = cleaned.length - newWp.length;
+          weapons = weapons.concat(newWp);
+          saveWeapons();
+          renderWeaponTable();
+          renderTplCreateSelects();
+          toast(skipped > 0 ? `Waffen-Import erfolgreich (${skipped} Duplikate übersprungen)` : "Waffen-Import erfolgreich");
+        },
+        onCancel: () => {
+          weapons = cleaned;
+          saveWeapons();
+          renderWeaponTable();
+          renderTplCreateSelects();
+          toast("Waffen-Datenbank ersetzt");
+        }
+      });
+    }catch(err){
+      toast("Import fehlgeschlagen: kein gültiges Waffen-JSON.");
+    }
+  }
 
   // ---------- database modal: skills ----------
   const skillBody = document.getElementById("skillBody");
@@ -2025,43 +2057,36 @@
     URL.revokeObjectURL(url);
   };
 
-  document.getElementById("importSkFile").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try{
-        const data = JSON.parse(reader.result);
-        if(!Array.isArray(data)) throw new Error("Kein Array");
-        const cleaned = data.map(migrateSkill);
-        showConfirm(`${cleaned.length} Fertigkeiten gefunden. Zur bestehenden Datenbank hinzufügen, oder komplett ersetzen?`, {
-          okText: "Hinzufügen",
-          cancelText: "Ersetzen",
-          okClass: "primary",
-          onOk: () => {
-            const newSk = dedupeByName(skills, cleaned);
-            const skipped = cleaned.length - newSk.length;
-            skills = skills.concat(newSk);
-            saveSkills();
-            renderSkillTable();
-            renderTplCreateSelects();
-            toast(skipped > 0 ? `Fertigkeiten-Import erfolgreich (${skipped} Duplikate übersprungen)` : "Fertigkeiten-Import erfolgreich");
-          },
-          onCancel: () => {
-            skills = cleaned;
-            saveSkills();
-            renderSkillTable();
-            renderTplCreateSelects();
-            toast("Fertigkeiten-Datenbank ersetzt");
-          }
-        });
-      }catch(err){
-        toast("Import fehlgeschlagen: kein gültiges Fertigkeiten-JSON.");
-      }
-      e.target.value = "";
-    };
-    reader.readAsText(file);
-  });
+  function processFertigkeitenImport(text){
+    try{
+      const data = JSON.parse(text);
+      if(!Array.isArray(data)) throw new Error("Kein Array");
+      const cleaned = data.map(migrateSkill);
+      showConfirm(`${cleaned.length} Fertigkeiten gefunden. Zur bestehenden Datenbank hinzufügen, oder komplett ersetzen?`, {
+        okText: "Hinzufügen",
+        cancelText: "Ersetzen",
+        okClass: "primary",
+        onOk: () => {
+          const newSk = dedupeByName(skills, cleaned);
+          const skipped = cleaned.length - newSk.length;
+          skills = skills.concat(newSk);
+          saveSkills();
+          renderSkillTable();
+          renderTplCreateSelects();
+          toast(skipped > 0 ? `Fertigkeiten-Import erfolgreich (${skipped} Duplikate übersprungen)` : "Fertigkeiten-Import erfolgreich");
+        },
+        onCancel: () => {
+          skills = cleaned;
+          saveSkills();
+          renderSkillTable();
+          renderTplCreateSelects();
+          toast("Fertigkeiten-Datenbank ersetzt");
+        }
+      });
+    }catch(err){
+      toast("Import fehlgeschlagen: kein gültiges Fertigkeiten-JSON.");
+    }
+  }
 
   // ---------- import / export (Figuren-DB) ----------
   document.getElementById("exportBtn").onclick = () => {
@@ -2074,43 +2099,36 @@
     URL.revokeObjectURL(url);
   };
 
-  document.getElementById("importFile").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try{
-        const data = JSON.parse(reader.result);
-        if(!Array.isArray(data)) throw new Error("Kein Array");
-        const cleaned = data.map(migrateTemplate);
-        showConfirm(`${cleaned.length} Einträge gefunden. Zur bestehenden Datenbank hinzufügen, oder komplett ersetzen?`, {
-          okText: "Hinzufügen",
-          cancelText: "Ersetzen",
-          okClass: "primary",
-          onOk: () => {
-            const newDb = dedupeByName(db, cleaned);
-            const skipped = cleaned.length - newDb.length;
-            db = db.concat(newDb);
-            saveDb();
-            renderDbTable();
-            renderDbSelect();
-            toast(skipped > 0 ? `Import erfolgreich (${skipped} Duplikate übersprungen)` : "Import erfolgreich");
-          },
-          onCancel: () => {
-            db = cleaned;
-            saveDb();
-            renderDbTable();
-            renderDbSelect();
-            toast("Datenbank ersetzt");
-          }
-        });
-      }catch(err){
-        toast("Import fehlgeschlagen: kein gültiges Datenbank-JSON.");
-      }
-      e.target.value = "";
-    };
-    reader.readAsText(file);
-  });
+  function processKaempferImport(text){
+    try{
+      const data = JSON.parse(text);
+      if(!Array.isArray(data)) throw new Error("Kein Array");
+      const cleaned = data.map(migrateTemplate);
+      showConfirm(`${cleaned.length} Einträge gefunden. Zur bestehenden Datenbank hinzufügen, oder komplett ersetzen?`, {
+        okText: "Hinzufügen",
+        cancelText: "Ersetzen",
+        okClass: "primary",
+        onOk: () => {
+          const newDb = dedupeByName(db, cleaned);
+          const skipped = cleaned.length - newDb.length;
+          db = db.concat(newDb);
+          saveDb();
+          renderDbTable();
+          renderDbSelect();
+          toast(skipped > 0 ? `Import erfolgreich (${skipped} Duplikate übersprungen)` : "Import erfolgreich");
+        },
+        onCancel: () => {
+          db = cleaned;
+          saveDb();
+          renderDbTable();
+          renderDbSelect();
+          toast("Datenbank ersetzt");
+        }
+      });
+    }catch(err){
+      toast("Import fehlgeschlagen: kein gültiges Datenbank-JSON.");
+    }
+  }
 
   // ---------- default/seed data (aus default-database.json, erstlauf & manueller reset) ----------
   async function loadDefaultData(){
