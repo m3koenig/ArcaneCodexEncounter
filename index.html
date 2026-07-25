@@ -588,6 +588,21 @@
   </div>
 </div>
 
+<div class="modal-bg" id="viewExportModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <h2 id="viewExportTitle">Export</h2>
+      <div class="spacer"></div>
+      <button class="btn small" id="viewExportClose">Schließen</button>
+    </div>
+    <textarea id="viewExportText" readonly style="width:100%;min-height:280px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:8px;font-family:var(--mono);font-size:12px;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
+      <button class="btn small" id="viewExportCopy">Kopieren</button>
+      <button class="btn primary small" id="viewExportDownload">Herunterladen</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   "use strict";
@@ -1462,6 +1477,41 @@
     else if(pasteImportType === "alles") processAllesImport(text);
   };
 
+  // ---------- gemeinsames Export-Anzeige-Modal (JSON ansehen, kopieren, herunterladen) ----------
+  const viewExportModal = document.getElementById("viewExportModal");
+  let viewExportFilename = "";
+
+  function showExportModal(title, dataObj, filename){
+    document.getElementById("viewExportTitle").textContent = title;
+    document.getElementById("viewExportText").value = JSON.stringify(dataObj, null, 2);
+    viewExportFilename = filename;
+    viewExportModal.classList.add("open");
+  }
+  document.getElementById("viewExportClose").onclick = () => viewExportModal.classList.remove("open");
+  viewExportModal.addEventListener("click", (e) => { if(e.target === viewExportModal) viewExportModal.classList.remove("open"); });
+
+  document.getElementById("viewExportCopy").onclick = async () => {
+    const text = document.getElementById("viewExportText").value;
+    try{
+      await navigator.clipboard.writeText(text);
+      toast("In Zwischenablage kopiert");
+    }catch(err){
+      document.getElementById("viewExportText").select();
+      toast("Kopieren fehlgeschlagen – Text ist markiert, Strg+C manuell nutzen");
+    }
+  };
+
+  document.getElementById("viewExportDownload").onclick = () => {
+    const text = document.getElementById("viewExportText").value;
+    const blob = new Blob([text], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = viewExportFilename || "export.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   document.getElementById("resetDbBtn").onclick = () => {
     showConfirm("Datenbank (Figuren, Waffen, Fertigkeiten) wirklich auf die Startwerte aus default-database.json zurücksetzen? Eigene Einträge gehen dabei verloren.", {
       okText: "Ja, zurücksetzen",
@@ -1484,13 +1534,7 @@
 
   document.getElementById("exportAllBtn").onclick = () => {
     const payload = { type: "arcane-codex-datenbank-komplett", kaempfer: db, waffen: weapons, fertigkeiten: skills };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "arcane-codex-datenbank-komplett.json";
-    a.click();
-    URL.revokeObjectURL(url);
+    showExportModal("Export: Alles (Figuren, Waffen, Fertigkeiten)", payload, "arcane-codex-datenbank-komplett.json");
   };
 
   function processAllesImport(text){
@@ -1903,13 +1947,7 @@
   };
 
   document.getElementById("exportWpBtn").onclick = () => {
-    const blob = new Blob([JSON.stringify(weapons, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "arcane-codex-waffen.json";
-    a.click();
-    URL.revokeObjectURL(url);
+    showExportModal("Export: Waffen", weapons, "arcane-codex-waffen.json");
   };
 
   function processWaffenImport(text){
@@ -2048,13 +2086,7 @@
   };
 
   document.getElementById("exportSkBtn").onclick = () => {
-    const blob = new Blob([JSON.stringify(skills, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "arcane-codex-fertigkeiten.json";
-    a.click();
-    URL.revokeObjectURL(url);
+    showExportModal("Export: Fertigkeiten", skills, "arcane-codex-fertigkeiten.json");
   };
 
   function processFertigkeitenImport(text){
@@ -2090,13 +2122,7 @@
 
   // ---------- import / export (Figuren-DB) ----------
   document.getElementById("exportBtn").onclick = () => {
-    const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "arcane-codex-datenbank.json";
-    a.click();
-    URL.revokeObjectURL(url);
+    showExportModal("Export: Figuren", db, "arcane-codex-datenbank.json");
   };
 
   function processKaempferImport(text){
@@ -2164,32 +2190,4 @@
       changed = true;
     }
     if(skills.length === 0 && defaults.fertigkeiten.length){
-      skills = defaults.fertigkeiten;
-      saveSkills();
-      changed = true;
-    }
-    if(changed){
-      renderDbSelect();
-      renderEncounter();
-    }
-  }
-
-  document.querySelectorAll("[data-icon]").forEach(el => {
-    el.innerHTML = icon(el.dataset.icon);
-  });
-
-  renderDbSelect();
-  renderEncounter();
-  seedIfEmpty();
-
-  if("serviceWorker" in navigator){
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch(err => {
-        console.log("Service Worker Registrierung fehlgeschlagen:", err);
-      });
-    });
-  }
-})();
-</script>
-</body>
-</html>
+      skills = defaults.fertigke
