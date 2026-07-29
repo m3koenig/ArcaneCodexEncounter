@@ -2190,4 +2190,32 @@
       changed = true;
     }
     if(skills.length === 0 && defaults.fertigkeiten.length){
-      skills = defaults.fertigke
+      skills = defaults.fertigkeiten;
+      saveSkills();
+      changed = true;
+    }
+    if(changed){
+      renderDbSelect();
+      renderEncounter();
+    }
+  }
+
+  document.querySelectorAll("[data-icon]").forEach(el => {
+    el.innerHTML = icon(el.dataset.icon);
+  });
+
+  renderDbSelect();
+  renderEncounter();
+  seedIfEmpty();
+
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(err => {
+        console.log("Service Worker Registrierung fehlgeschlagen:", err);
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>
